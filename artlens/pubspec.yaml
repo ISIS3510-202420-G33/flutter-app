@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_svg: ^2.0.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -95,4 +96,15 @@ flutter:
         - asset: assets/fonts/OpenSans-VariableFont_wdth,wght.ttf
         - asset: assets/fonts/OpenSans-Italic-VariableFont_wdth,wght.ttf
           style: italic
+  assets:
+    - assets/images/camera-solid.svg
+    - assets/images/circle-user-solid.svg
+    - assets/images/fire-solid.svg
+    - assets/images/headphones-solid.svg
+    - assets/images/house-solid.svg
+    - assets/images/landmark-solid.svg
+    - assets/images/star-solid.svg
+    - assets/images/user-solid.svg
+
+
 
