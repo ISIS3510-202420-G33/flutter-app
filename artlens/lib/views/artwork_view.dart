@@ -1,7 +1,8 @@
+import 'package:artlens/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 class ArtworkView extends StatefulWidget {
   final String artworkName;
@@ -19,7 +20,7 @@ class ArtworkView extends StatefulWidget {
 
 class _ArtworkViewState extends State<ArtworkView> {
   int _selectedIndex = 0;
-  Color _iconColor = Colors.grey; // Default color of the icon
+  bool _isLiked = false; // To track if the icon is pressed
 
   void _onItemTapped(int index) {
     setState(() {
@@ -28,84 +29,145 @@ class _ArtworkViewState extends State<ArtworkView> {
     });
   }
 
-  // Función para alternar el color del icono
-  void _onLogoPressed() {
+  // Function to toggle the like status
+  void _onLikePressed() {
     setState(() {
-      _iconColor = (_iconColor == Colors.grey) ? Colors.red : Colors.grey;
+      _isLiked = !_isLiked; // Toggle the like status
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // Accede al tema actual
+    final theme = Theme.of(context); // Access the current theme
 
     return Scaffold(
-      appBar: CustomAppBar(title: "ARTWORK"), // Uso del AppBar personalizado
+      appBar: CustomAppBar(title: "ARTWORK"), // Usage of custom AppBar
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0), // Adjust padding for overall content
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Título de la obra
-            Center(
-              child: Text(
-                widget.artworkName,
-                style: theme.textTheme.headlineMedium, // Usa un tamaño más pequeño para el título
-                textAlign: TextAlign.center,
+            // Adjusted Row containing title and like button
+            Padding(
+              padding: const EdgeInsets.only(top: 32.0, left: 80.0), // Moves the row down
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 32.0), // Moves title to the right
+                      child: Center(
+                        child: Text(
+                          widget.artworkName,
+                          style: theme.textTheme.headlineMedium, // Use a larger size for the title
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: _isLiked ? theme.colorScheme.secondary : Colors.black, // Toggle background color
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: SvgPicture.asset(
+                          'assets/images/star-solid.svg',
+                          color: Colors.white, // White icon
+                          height: 24,
+                          width: 24,
+                        ),
+                      ),
+                    ),
+                    onPressed: _onLikePressed, // Toggle like status
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
 
-            // Imagen de la obra con el botón de favorito
+            // Artwork Image with fixed width
+            Center(
+              child: Container(
+                constraints: BoxConstraints(maxWidth: 280, maxHeight: 350), // Adjust maxWidth and maxHeight as needed
+                child: Image.network(
+                  widget.imageUrl,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Basic Description of the Artwork with adjusted padding
+            Padding(
+              padding: const EdgeInsets.only(left: 32.0, top:16.0), // Adjust padding to move text to the right
+              child: Text(
+                "Artist: Leonardo da Vinci\n"
+                    "Creation Date: 1505\n"
+                    "Technique: Oil painting on poplar wood\n"
+                    "Dimensions: 77 cm × 53 cm (30 in × 21 in)\n"
+                    "Current Location: Louvre Museum, Paris, France",
+                style: theme.textTheme.bodyMedium,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Play audio button with description
+            // Play audio button with description
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Image.network(
-                    widget.imageUrl,
-                    fit: BoxFit.cover,
+                IconButton(
+                  icon: SvgPicture.asset(
+                    'assets/images/headphones-solid.svg',
+                    color: Colors.black, // Black icon
+                    height: 40,
                   ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.favorite),
-                  color: _iconColor, // Establece el color del icono
-                  onPressed: _onLogoPressed, // Alterna el color al hacer clic
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Descripción básica de la obra
-            Text(
-              "Artist: Leonardo da Vinci\n"
-                  "Creation Date: 1505\n"
-                  "Technique: Oil painting on poplar wood\n"
-                  "Dimensions: 77 cm × 53 cm (30 in × 21 in)\n"
-                  "Current Location: Louvre Museum, Paris, France",
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 16),
-
-            // Botón para reproducir audio con descripción
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.play_arrow),
+                  padding: EdgeInsets.only(left: 20.0), // Add padding between icon and text
                   onPressed: () {
-                    // Acción para iniciar la narración de audio
+                    // Action to start audio narration
                   },
                 ),
-                const Text("Click the icon to start the audio narration."),
+                Padding(
+                  padding: EdgeInsets.only(left: 8.0), // Add padding between icon and text
+                  child: Text(
+                    "Click the icon to start the audio narration.",
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.bold, // Make the text bold
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
 
-            // Botón personalizado para ver más detalles del artista
-            ElevatedButton(
-              onPressed: () {
-                // Acción para ver detalles del artista
-              },
-              child: Text("View Artist Details"),
+            // Custom button to view more artist details
+            // Button to view more artist details
+            Padding(
+              padding: const EdgeInsets.only(left: 28.0), // Move the button to the right
+              child: SizedBox(
+                width: 328, // Width of the button
+                height: 39, // Height of the button
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black, // Background color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8), // Curvature of the corners
+                    ),
+                  ),
+                  onPressed: () {
+                    // Action to view artist details
+                  },
+                  child: Text(
+                    "View Artist Details",
+                    style: TextStyle(
+                      color: Colors.white, // Text color
+                      fontSize: 18, // Increase font size
+                    ),
+                  ),
+                ),
+              ),
             ),
           ],
         ),
@@ -113,7 +175,7 @@ class _ArtworkViewState extends State<ArtworkView> {
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: _onItemTapped,
-      ), // Uso del BottomNavBar personalizado
+      ), // Usage of custom BottomNavBar
     );
   }
 }

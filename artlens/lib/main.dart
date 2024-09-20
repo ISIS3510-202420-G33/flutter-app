@@ -1,5 +1,7 @@
+import 'package:artlens/views/artwork_view.dart';
 import 'package:flutter/material.dart';
 import 'views/home_view.dart';
+import 'package:artlens/routes.dart'; // Import the routes
 
 void main() {
   runApp(const ArtLensApp());
@@ -31,13 +33,16 @@ class ArtLensApp extends StatelessWidget {
 
         // Updated TextTheme with OpenSans and consistent styling
         textTheme: const TextTheme(
-          titleLarge: TextStyle(fontSize: 30, fontWeight: FontWeight.w700),
-          displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w700), // Large titles
+          titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),  // Extra bold title
+          displayLarge: TextStyle(fontSize: 32, fontWeight: FontWeight.w800), // Extra bold large title
           bodyLarge: TextStyle(fontSize: 18, fontWeight: FontWeight.w400),    // Large body text
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),   // Medium body text
         ),
       ),
-      home: const HomeView(),
+      home: const ArtworkView(
+          artworkName: "La Gioconda",
+          imageUrl: "https://www.arteworld.it/wp-content/uploads/2016/02/Gioconda-San-Pietroburgo.jpg"
+      ),
       debugShowCheckedModeBanner: false,
     );
   }
