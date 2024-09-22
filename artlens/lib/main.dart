@@ -39,10 +39,7 @@ class ArtLensApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),   // Medium body text
         ),
       ),
-      home: const ArtworkView(
-          artworkName: "La Gioconda",
-          imageUrl: "https://www.arteworld.it/wp-content/uploads/2016/02/Gioconda-San-Pietroburgo.jpg"
-      ),
+      home: const HomeView(),
       debugShowCheckedModeBanner: false,
     );
   }

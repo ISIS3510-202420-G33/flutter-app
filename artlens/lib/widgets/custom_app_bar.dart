@@ -18,15 +18,21 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         // AppBar
         Transform.translate(
-          offset: Offset(0, 6), // Ajusta el AppBar ligeramente hacia abajo
+          offset: const Offset(0, 6), // Ajusta el AppBar ligeramente hacia abajo
           child: AppBar(
             backgroundColor: Colors.white,
             leading: Padding(
               padding: const EdgeInsets.only(left: 16.0), // Mueve la flecha hacia la derecha
               child: IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.black),
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
                 onPressed: () {
-                  Navigator.pop(context);
+                  // Ensure Navigator can pop before trying to pop
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    // Optional: show a message or take another action if there's no screen to pop to
+                    print('No screen to pop back to');
+                  }
                 },
               ),
             ),
@@ -44,7 +50,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 child: IconButton(
                   icon: Container(
                     padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.black, // Fondo negro
                       shape: BoxShape.circle,
                     ),
@@ -75,5 +81,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight + 12); // Ajustar el tamaño total para incluir las líneas
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 12); // Ajustar el tamaño total para incluir las líneas
 }
