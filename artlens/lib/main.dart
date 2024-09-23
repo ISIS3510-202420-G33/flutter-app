@@ -1,4 +1,5 @@
 import 'package:artlens/views/artwork_view.dart';
+import 'package:artlens/views/map_view.dart';
 import 'package:flutter/material.dart';
 import 'views/home_view.dart';
 import 'package:artlens/routes.dart'; // Import the routes

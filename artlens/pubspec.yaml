@@ -31,6 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_svg: ^2.0.0
+  google_maps_flutter: ^2.5.0
+  location: ^5.0.0
   camera: ^0.10.0
 
 
