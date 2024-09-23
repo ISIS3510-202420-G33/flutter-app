@@ -3,8 +3,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final bool showProfileIcon;  // Nuevo parámetro para controlar el ícono
 
-  CustomAppBar({required this.title});
+  CustomAppBar({required this.title, this.showProfileIcon = true});
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +27,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.black),
                 onPressed: () {
-                  // Ensure Navigator can pop before trying to pop
                   if (Navigator.canPop(context)) {
                     Navigator.pop(context);
                   } else {
-                    // Optional: show a message or take another action if there's no screen to pop to
                     print('No screen to pop back to');
                   }
                 },
@@ -44,9 +43,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 fontWeight: FontWeight.w800, // Extra bold para el título
               ), // Aplica el estilo global del tema
             ),
-            actions: [
+            actions: showProfileIcon
+                ? [
               Padding(
-                padding: const EdgeInsets.only(right: 32.0), // Alinea el ícono con el título
+                padding: const EdgeInsets.only(right: 32.0),
                 child: IconButton(
                   icon: Container(
                     padding: const EdgeInsets.all(8.0),
@@ -68,7 +68,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   },
                 ),
               ),
-            ],
+            ]
+                : [],  // No muestra el ícono si showProfileIcon es false
           ),
         ),
         // Línea inferior

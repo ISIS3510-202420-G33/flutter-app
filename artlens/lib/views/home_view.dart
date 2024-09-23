@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../widgets/custom_button.dart'; // Import the reusable custom button widget
 import 'package:artlens/widgets/custom_bottom_nav_bar.dart';
 
+import 'login_view.dart';
+
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
 
@@ -42,7 +44,12 @@ class _HomeViewState extends State<HomeView> {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              // Navigate to profile or any other action
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LoginPage(), // Reutiliza la instancia singleton de LoginPage
+                ),
+              );
             },
           ),
         ],
