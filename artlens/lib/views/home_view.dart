@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_button.dart'; // Import the reusable custom button widget
+import 'map_view.dart'; // Import the MapView class
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -78,7 +79,11 @@ class _HomeViewState extends State<HomeView> {
             CustomButton(
               label: "View Map",
               onPressed: () {
-                // Define button action
+                // Navegar a la vista del mapa
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MapView()),
+                );
               },
             ),
             CustomButton(

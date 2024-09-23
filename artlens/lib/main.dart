@@ -1,4 +1,5 @@
 import 'package:artlens/views/artwork_view.dart';
+import 'package:artlens/views/map_view.dart';
 import 'package:flutter/material.dart';
 import 'views/home_view.dart';
 import 'package:artlens/routes.dart'; // Import the routes
@@ -39,10 +40,7 @@ class ArtLensApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),   // Medium body text
         ),
       ),
-      home: const ArtworkView(
-          artworkName: "La Gioconda",
-          imageUrl: "https://www.arteworld.it/wp-content/uploads/2016/02/Gioconda-San-Pietroburgo.jpg"
-      ),
+      home: HomeView(),
       debugShowCheckedModeBanner: false,
     );
   }
