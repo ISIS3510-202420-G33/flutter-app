@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_button.dart'; // Import the reusable custom button widget
-import 'map_view.dart'; // Import the MapView class
+import 'map_view.dart';
+import 'package:artlens/widgets/custom_bottom_nav_bar.dart';
+import 'login_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -18,7 +20,7 @@ class _HomeViewState extends State<HomeView> {
       _selectedIndex = index;
       // Handle navigation based on index
       if (index == 0) {
-        // Stay on Home page
+
       } else if (index == 1) {
         // Navigate to Camera page
       } else if (index == 2) {
@@ -42,7 +44,12 @@ class _HomeViewState extends State<HomeView> {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              // Navigate to profile or any other action
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => LoginPage(), // Reutiliza la instancia singleton de LoginPage
+                ),
+              );
             },
           ),
         ],
@@ -95,25 +102,9 @@ class _HomeViewState extends State<HomeView> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.camera_alt),
-            label: 'Camera',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.local_fire_department),
-            label: 'Trending',
-          ),
-        ],
-        currentIndex: _selectedIndex, // Highlight the current item
-        selectedItemColor: theme.colorScheme.secondary, // Use accent color for selected item
-        unselectedItemColor: theme.colorScheme.onPrimary, // Use black for unselected items
-        onTap: _onItemTapped, // Handle tap on the items
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
       ),
     );
   }

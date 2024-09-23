@@ -40,7 +40,7 @@ class ArtLensApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),   // Medium body text
         ),
       ),
-      home: HomeView(),
+      home: const HomeView(),
       debugShowCheckedModeBanner: false,
     );
   }

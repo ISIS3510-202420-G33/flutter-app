@@ -3,8 +3,9 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final bool showProfileIcon;  // Nuevo parámetro para controlar el ícono
 
-  CustomAppBar({required this.title});
+  CustomAppBar({required this.title, this.showProfileIcon = true});
 
   @override
   Widget build(BuildContext context) {
@@ -18,15 +19,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         // AppBar
         Transform.translate(
-          offset: Offset(0, 6), // Ajusta el AppBar ligeramente hacia abajo
+          offset: const Offset(0, 6), // Ajusta el AppBar ligeramente hacia abajo
           child: AppBar(
             backgroundColor: Colors.white,
             leading: Padding(
               padding: const EdgeInsets.only(left: 16.0), // Mueve la flecha hacia la derecha
               child: IconButton(
-                icon: Icon(Icons.arrow_back, color: Colors.black),
+                icon: const Icon(Icons.arrow_back, color: Colors.black),
                 onPressed: () {
-                  Navigator.pop(context);
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    print('No screen to pop back to');
+                  }
                 },
               ),
             ),
@@ -38,13 +43,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 fontWeight: FontWeight.w800, // Extra bold para el título
               ), // Aplica el estilo global del tema
             ),
-            actions: [
+            actions: showProfileIcon
+                ? [
               Padding(
-                padding: const EdgeInsets.only(right: 32.0), // Alinea el ícono con el título
+                padding: const EdgeInsets.only(right: 32.0),
                 child: IconButton(
                   icon: Container(
                     padding: const EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.black, // Fondo negro
                       shape: BoxShape.circle,
                     ),
@@ -62,7 +68,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   },
                 ),
               ),
-            ],
+            ]
+                : [],  // No muestra el ícono si showProfileIcon es false
           ),
         ),
         // Línea inferior
@@ -75,5 +82,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight + 12); // Ajustar el tamaño total para incluir las líneas
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 12); // Ajustar el tamaño total para incluir las líneas
 }

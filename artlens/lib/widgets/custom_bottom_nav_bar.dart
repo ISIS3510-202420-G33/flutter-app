@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../views/camera_view.dart';  // Correct relative path
+
 
 class CustomBottomNavBar extends StatefulWidget {
   final int selectedIndex;
@@ -28,6 +30,17 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
     );
   }
 
+  void _onItemTapped(int index) {
+    if (index == 1) { // Camera Tab is at index 1
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CameraPreviewScreen()), // Push CameraPreviewScreen
+      );
+    } else {
+      widget.onItemTapped(index);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
@@ -48,7 +61,7 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
       currentIndex: widget.selectedIndex,
       selectedItemColor: Theme.of(context).colorScheme.secondary, // Theme's secondary color for selected item
       unselectedItemColor: Colors.black, // Black for unselected items
-      onTap: widget.onItemTapped,
+      onTap: _onItemTapped, // Use the updated onTap function
     );
   }
 }
