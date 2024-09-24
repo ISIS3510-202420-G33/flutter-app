@@ -2,10 +2,19 @@ import 'package:flutter/material.dart';
 import '../widgets/custom_button.dart'; // Import the reusable custom button widget
 import 'map_view.dart';
 import 'package:artlens/widgets/custom_bottom_nav_bar.dart';
-import 'login_view.dart';
+import '../widgets/custom_app_bar.dart'; // Importa la CustomAppBar
 
 class HomeView extends StatefulWidget {
-  const HomeView({Key? key}) : super(key: key);
+  // Implementación del patrón Singleton
+  static final HomeView _instance = HomeView._internal();
+
+  // Constructor privado para prevenir nuevas instancias
+  HomeView._internal();
+
+  // Factory que retorna la misma instancia de HomeView
+  factory HomeView() {
+    return _instance;
+  }
 
   @override
   _HomeViewState createState() => _HomeViewState();
@@ -20,11 +29,11 @@ class _HomeViewState extends State<HomeView> {
       _selectedIndex = index;
       // Handle navigation based on index
       if (index == 0) {
-
+        // No need to navigate if already on Home
       } else if (index == 1) {
-        // Navigate to Camera page
+        // Navigate to Camera page (replace with real view if available)
       } else if (index == 2) {
-        // Navigate to Trending page
+        // Navigate to Trending page (replace with real view if available)
       }
     });
   }
@@ -34,26 +43,7 @@ class _HomeViewState extends State<HomeView> {
     final theme = Theme.of(context); // Access the theme
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.primaryColor, // White background from the theme
-        title: Text(
-          "HOME",
-          style: theme.textTheme.titleLarge,
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LoginPage(), // Reutiliza la instancia singleton de LoginPage
-                ),
-              );
-            },
-          ),
-        ],
-      ),
+      appBar: CustomAppBar(title: "HOME", showProfileIcon: true,showBackArrow: false), // Usamos la CustomAppBar
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

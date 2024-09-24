@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../views/camera_view.dart';  // Correct relative path
-
+import '../views/home_view.dart';   // Importa la vista de Home para poder navegar a ella (Singleton)
 
 class CustomBottomNavBar extends StatefulWidget {
   final int selectedIndex;
@@ -31,13 +31,20 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   }
 
   void _onItemTapped(int index) {
-    if (index == 1) { // Camera Tab is at index 1
+    if (index == 0 && widget.selectedIndex != 0) {
+      // Solo navega a Home si no estás en Home
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => HomeView()), // Singleton de HomeView
+            (route) => false, // Elimina todas las rutas anteriores
+      );
+    } else if (index == 1) { // Camera Tab es index 1
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => CameraPreviewScreen()), // Push CameraPreviewScreen
+        MaterialPageRoute(builder: (context) => CameraPreviewScreen()), // Navega a CameraPreviewScreen
       );
     } else {
-      widget.onItemTapped(index);
+      widget.onItemTapped(index); // Para los otros botones
     }
   }
 
