@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../routes.dart';
 import '../widgets/custom_button.dart'; // Import the reusable custom button widget
 import 'map_view.dart';
 import 'package:artlens/widgets/custom_bottom_nav_bar.dart';
@@ -24,14 +25,21 @@ class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
 
   // Define a function to handle navigation
-  void _onItemTapped(int index) {
+    void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      // Handle navigation based on index
       if (index == 0) {
         // No need to navigate if already on Home
       } else if (index == 1) {
-        // Navigate to Camera page (replace with real view if available)
+        Navigator.pushNamed(
+          context,
+          Routes.camera,
+        ).then((_) {
+          // When returning to HomeView, reset the selected index to 0
+          setState(() {
+            _selectedIndex = 0;
+          });
+        });
       } else if (index == 2) {
         // Navigate to Trending page (replace with real view if available)
       }
@@ -86,7 +94,6 @@ class _HomeViewState extends State<HomeView> {
             CustomButton(
               label: "View Artists",
               onPressed: () {
-                // Define button action
               },
             ),
           ],

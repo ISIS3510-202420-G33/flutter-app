@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../views/camera_view.dart';  // Correct relative path
-import '../views/home_view.dart';   // Importa la vista de Home para poder navegar a ella (Singleton)
 
-class CustomBottomNavBar extends StatefulWidget {
+class CustomBottomNavBar extends StatelessWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
 
   CustomBottomNavBar({required this.selectedIndex, required this.onItemTapped});
 
-  @override
-  _CustomBottomNavBarState createState() => _CustomBottomNavBarState();
-}
-
-class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
   Widget _buildIcon(String assetName, {double size = 24}) {
     return Container(
       padding: const EdgeInsets.all(8.0),
@@ -28,24 +21,6 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
         width: size,
       ),
     );
-  }
-
-  void _onItemTapped(int index) {
-    if (index == 0 && widget.selectedIndex != 0) {
-      // Solo navega a Home si no estás en Home
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => HomeView()), // Singleton de HomeView
-            (route) => false, // Elimina todas las rutas anteriores
-      );
-    } else if (index == 1) { // Camera Tab es index 1
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => CameraPreviewScreen()), // Navega a CameraPreviewScreen
-      );
-    } else {
-      widget.onItemTapped(index); // Para los otros botones
-    }
   }
 
   @override
@@ -65,10 +40,10 @@ class _CustomBottomNavBarState extends State<CustomBottomNavBar> {
           label: 'Trending',
         ),
       ],
-      currentIndex: widget.selectedIndex,
+      currentIndex: selectedIndex, // Reflect the selected index
       selectedItemColor: Theme.of(context).colorScheme.secondary, // Theme's secondary color for selected item
       unselectedItemColor: Colors.black, // Black for unselected items
-      onTap: _onItemTapped, // Use the updated onTap function
+      onTap: (index) => onItemTapped(index), // Delegate tap handling to parent
     );
   }
 }
