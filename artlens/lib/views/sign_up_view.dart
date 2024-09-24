@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import '../widgets/custom_app_bar.dart';  // Asegúrate de importar la CustomAppBar
+import '../widgets/custom_app_bar.dart';
 
 class SignUpPage extends StatelessWidget {
   static final SignUpPage _instance = SignUpPage._internal();

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
 import '../routes.dart';
 import '../widgets/custom_app_bar.dart';
-import 'artwork_view.dart'; // Import the ArtworkView screen
 
 class CameraPreviewScreen extends StatefulWidget {
   @override
