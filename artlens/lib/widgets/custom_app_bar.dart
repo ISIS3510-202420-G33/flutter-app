@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../views/login_view.dart';  // Asegúrate de importar la vista de Login
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final bool showProfileIcon;  // Nuevo parámetro para controlar el ícono
+  final bool showProfileIcon;  // Controla si se muestra el ícono de perfil
+  final bool showBackArrow;    // Nuevo parámetro para controlar si se muestra la flecha
 
-  CustomAppBar({required this.title, this.showProfileIcon = true});
+  CustomAppBar({
+    required this.title,
+    this.showProfileIcon = true,
+    this.showBackArrow = true,  // Por defecto muestra la flecha
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +28,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           offset: const Offset(0, 6), // Ajusta el AppBar ligeramente hacia abajo
           child: AppBar(
             backgroundColor: Colors.white,
-            leading: Padding(
+            leading: showBackArrow
+                ? Padding(
               padding: const EdgeInsets.only(left: 16.0), // Mueve la flecha hacia la derecha
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.black),
@@ -34,7 +41,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   }
                 },
               ),
-            ),
+            )
+                : null, // No muestra el ícono de flecha si `showBackArrow` es `false`
             centerTitle: true, // Centra el título
             title: Text(
               title,
@@ -64,12 +72,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ),
                   onPressed: () {
-                    // Acción para navegar al perfil de usuario
+                    // Navegar a la vista de Login
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => LoginPage()), // Navegar a LoginPage
+                    );
                   },
                 ),
               ),
             ]
-                : [],  // No muestra el ícono si showProfileIcon es false
+                : [], // No muestra el ícono de perfil si `showProfileIcon` es `false`
           ),
         ),
         // Línea inferior
