@@ -1,17 +1,15 @@
-import 'package:artlens/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../routes.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 
 class ArtworkView extends StatefulWidget {
-  final String artworkName;
-  final String imageUrl;
+  final int id;
 
   const ArtworkView({
     Key? key,
-    required this.artworkName,
-    required this.imageUrl,
+    required this.id,
   }) : super(key: key);
 
   @override
@@ -19,13 +17,27 @@ class ArtworkView extends StatefulWidget {
 }
 
 class _ArtworkViewState extends State<ArtworkView> {
-  int _selectedIndex = 0;
-  bool _isLiked = false; // To track if the icon is pressed
+  int _selectedIndex = 1;
+  bool _isLiked = false;
 
+  // Define a function to handle navigation
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
-      // Navegación basada en el índice
+      if (index == 0) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          Routes.home,
+          (route) => false
+        );
+      } else if (index == 1) {
+        Navigator.pushNamed(
+          context,
+          Routes.camera,
+        );
+      } else if (index == 2) {
+        // Navigate to Trending page (replace with real view if available)
+      }
     });
   }
 
@@ -58,7 +70,7 @@ class _ArtworkViewState extends State<ArtworkView> {
                       padding: const EdgeInsets.only(right: 32.0), // Moves title to the right
                       child: Center(
                         child: Text(
-                          widget.artworkName,
+                          'La Gioconda',
                           style: theme.textTheme.headlineMedium, // Use a larger size for the title
                           textAlign: TextAlign.center,
                         ),
@@ -93,7 +105,7 @@ class _ArtworkViewState extends State<ArtworkView> {
               child: Container(
                 constraints: BoxConstraints(maxWidth: 280, maxHeight: 350), // Adjust maxWidth and maxHeight as needed
                 child: Image.network(
-                  widget.imageUrl,
+                  'https://www.arteworld.it/wp-content/uploads/2016/02/Gioconda-San-Pietroburgo.jpg',
                   fit: BoxFit.cover,
                 ),
               ),
@@ -157,7 +169,10 @@ class _ArtworkViewState extends State<ArtworkView> {
                     ),
                   ),
                   onPressed: () {
-                    // Action to view artist details
+                    Navigator.pushNamed(
+                      context,
+                      Routes.artist,
+                    );
                   },
                   child: Text(
                     "View Artist Details",

@@ -9,7 +9,7 @@ class NoGlowScrollBehavior extends ScrollBehavior {
   }
 }
 
-class FavoritesView extends StatelessWidget {
+class ArtistView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Lista de obras favoritas simuladas
