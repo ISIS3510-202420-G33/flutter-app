@@ -1,8 +1,10 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import '../widgets/custom_app_bar.dart';
+import '../routes.dart';
+import '../widgets/custom_bottom_nav_bar.dart';
 
 class MapView extends StatefulWidget {
   const MapView({super.key});
@@ -12,9 +14,7 @@ class MapView extends StatefulWidget {
 }
 
 class _MapViewState extends State<MapView> {
-
-  Location _locationController = new Location();
-
+  Location _locationController = Location();
   final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
 
   static const LatLng _pUniversidadAndes = LatLng(4.603104981314923, -74.06507505903969);
@@ -29,80 +29,106 @@ class _MapViewState extends State<MapView> {
   static const LatLng _pMuseoSantaClara = LatLng(4.597944, -74.072523);
   static const LatLng _pPlanetarioBogota = LatLng(4.609710, -74.070089);
 
-
-
-
   LatLng? _currentP = null;
+  int _selectedIndex = 0; // Para manejar el índice del BottomNavigationBar
 
   @override
   void initState() {
     super.initState();
     getLocationUpdates();
   }
+
   @override
-  Widget build(BuildContext context){
+  Widget build(BuildContext context) {
     return Scaffold(
-        body: _currentP == null ? const Center(child: Text("Loading..."),) :
-        GoogleMap(
-          onMapCreated: ((GoogleMapController controller) => _mapController.complete(controller)),
-          initialCameraPosition: CameraPosition(target: _pUniversidadAndes, zoom:14),
+      appBar: CustomAppBar(title: "Map"),
+      body: _currentP == null
+          ? const Center(child: Text("Loading..."))
+          : GoogleMap(
+        onMapCreated: (GoogleMapController controller) => _mapController.complete(controller),
+        initialCameraPosition: CameraPosition(target: _pUniversidadAndes, zoom: 14),
         markers: {
-          Marker(
-              markerId: MarkerId("_currentLocation"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _currentP!),
+          // Marcadores de los museos
           Marker(
             markerId: MarkerId("_universidadDeLosAndes"),
             icon: BitmapDescriptor.defaultMarker,
-            position: _pUniversidadAndes),
+            position: _pUniversidadAndes,
+          ),
           Marker(
-              markerId: MarkerId("_museoDelOro"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _pMuseoDelOro),
+            markerId: MarkerId("_museoDelOro"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: _pMuseoDelOro,
+          ),
           Marker(
             markerId: MarkerId("_museoNacional"),
             icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoNacional),
+            position: _pMuseoNacional,
+          ),
           Marker(
             markerId: MarkerId("_museoBotero"),
             icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoBotero),
+            position: _pMuseoBotero,
+          ),
           Marker(
-              markerId: MarkerId("_casaDeMoneda"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _pCasaDeMoneda),
+            markerId: MarkerId("_casaDeMoneda"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: _pCasaDeMoneda,
+          ),
           Marker(
-              markerId: MarkerId("_mambo"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _pMambo),
+            markerId: MarkerId("_mambo"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: _pMambo,
+          ),
           Marker(
-              markerId: MarkerId("_museoDeBogota"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _pMuseoDeBogota),
+            markerId: MarkerId("_museoDeBogota"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: _pMuseoDeBogota,
+          ),
           Marker(
-              markerId: MarkerId("_museoColonial"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _pMuseoColonial),
+            markerId: MarkerId("_museoColonial"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: _pMuseoColonial,
+          ),
           Marker(
-              markerId: MarkerId("_museoEsmeralda"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _pMuseoEsmeralda),
+            markerId: MarkerId("_museoEsmeralda"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: _pMuseoEsmeralda,
+          ),
           Marker(
-              markerId: MarkerId("_museoSantaClara"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _pMuseoSantaClara),
+            markerId: MarkerId("_museoSantaClara"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: _pMuseoSantaClara,
+          ),
           Marker(
-              markerId: MarkerId("_planetarioBogota"),
-              icon: BitmapDescriptor.defaultMarker,
-              position: _pPlanetarioBogota),
-        },));
+            markerId: MarkerId("_planetarioBogota"),
+            icon: BitmapDescriptor.defaultMarker,
+            position: _pPlanetarioBogota,
+          ),
+        },
+        circles: _currentP == null
+            ? {}
+            : {
+          Circle(
+            circleId: CircleId("_currentLocationCircle"),
+            center: _currentP!,
+            radius: 50, // Puedes ajustar el tamaño del círculo aquí
+            fillColor: Colors.blue.withOpacity(0.5), // Color del círculo
+            strokeColor: Colors.blue, // Color del borde del círculo
+            strokeWidth: 2, // Grosor del borde
+          ),
+        },
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        selectedIndex: _selectedIndex,
+        onItemTapped: _onItemTapped,
+      ),
+    );
   }
 
-  Future<void> _cameraToPosition(LatLng pos) async{
+  Future<void> _cameraToPosition(LatLng pos) async {
     final GoogleMapController controller = await _mapController.future;
     CameraPosition _newCameraPosition = CameraPosition(target: pos, zoom: 14);
-    await controller.animateCamera(CameraUpdate.newCameraPosition(_newCameraPosition),
-    );
+    await controller.animateCamera(CameraUpdate.newCameraPosition(_newCameraPosition));
   }
 
   Future<void> getLocationUpdates() async {
@@ -112,23 +138,44 @@ class _MapViewState extends State<MapView> {
     _serviceEnabled = await _locationController.serviceEnabled();
     if (_serviceEnabled) {
       _serviceEnabled = await _locationController.requestService();
-    } else{
+    } else {
       return;
     }
     _permissionGranted = await _locationController.hasPermission();
-    if (_permissionGranted == PermissionStatus.denied){
+    if (_permissionGranted == PermissionStatus.denied) {
       _permissionGranted = await _locationController.requestPermission();
-      if (_permissionGranted != PermissionStatus.granted){
+      if (_permissionGranted != PermissionStatus.granted) {
         return;
       }
     }
 
     _locationController.onLocationChanged.listen((LocationData currentLocation) {
-      if (currentLocation.latitude != null && currentLocation.longitude != null){
+      if (currentLocation.latitude != null && currentLocation.longitude != null) {
         setState(() {
           _currentP = LatLng(currentLocation.latitude!, currentLocation.longitude!);
           _cameraToPosition(_currentP!);
         });
+      }
+    });
+  }
+
+  // Define a function to handle navigation
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+      if (index == 0) {
+        Navigator.pushNamedAndRemoveUntil(
+          context,
+          Routes.home,
+              (route) => false,
+        );
+      } else if (index == 1) {
+        Navigator.pushNamed(
+          context,
+          Routes.camera,
+        );
+      } else if (index == 2) {
+        // Navigate to Trending page (replace with real view if available)
       }
     });
   }
