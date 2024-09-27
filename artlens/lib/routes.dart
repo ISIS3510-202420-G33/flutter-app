@@ -1,9 +1,11 @@
+// /lib/routes.dart
 import 'package:flutter/material.dart';
-import 'package:artlens/views/artwork_view.dart';
-import 'package:artlens/views/artist_view.dart';
-import 'package:artlens/views/home_view.dart';
-import 'package:artlens/views/camera_view.dart';
-import 'package:artlens/views/map_view.dart';
+import 'package:artlens/view/artwork_view.dart';
+import 'package:artlens/view/artist_view.dart';
+import 'package:artlens/view/home_view.dart';
+import 'package:artlens/view/camera_view.dart';
+import 'package:artlens/view/map_view.dart';
+import 'package:artlens/view_model/app_facade.dart'; // Make sure to import AppFacade
 
 class Routes {
   static const String home = '/';
@@ -12,7 +14,8 @@ class Routes {
   static const String artist = '/artist';
   static const String map = '/map';
 
-  static Route<dynamic> generateRoute(RouteSettings settings) {
+  // Now this function receives the appFacade as an argument
+  static Route<dynamic> generateRoute(RouteSettings settings, AppFacade appFacade) {
     switch (settings.name) {
       case home:
         return MaterialPageRoute(builder: (_) => HomeView());
@@ -20,9 +23,9 @@ class Routes {
       case artwork:
         if (settings.arguments is Map<String, dynamic>) {
           final args = settings.arguments as Map<String, dynamic>;
-          final int id = args['id'] ?? 0;
+          final int id = args['id'] ?? 0; // You might want to use id from args if applicable
           return MaterialPageRoute(
-            builder: (_) => ArtworkView(id: id), // Pass the argument to ArtworkView
+            builder: (_) => ArtworkView(id: id, appFacade: appFacade), // Pass appFacade here
           );
         }
         return MaterialPageRoute(
