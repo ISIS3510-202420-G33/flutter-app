@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../views/login_view.dart';  // Asegúrate de importar la vista de Login
+import '../view/login_view.dart';  // Asegúrate de importar la vista de Login
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
