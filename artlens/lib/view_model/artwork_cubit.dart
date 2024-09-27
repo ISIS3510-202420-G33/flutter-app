@@ -36,9 +36,7 @@ class ArtworkCubit extends Cubit<ArtworkState> {
     try {
       emit(ArtworkLoading()); // Emitimos el estado de carga
       final artwork = await artworkService.fetchArtworkById(id);
-      final comments = await artworkService.fetchCommentsByArtworkId(id);
-      print(artwork);
-      print(comments);
+      final comments = await artworkService.fetchCommentsByArtworkId(id);;
       emit(ArtworkLoaded(artwork, comments)); // Emitimos el estado cargado con los datos
     } catch (e) {
       emit(ArtworkError('Error fetching artwork and comments: ${e.toString()}')); // Emitimos estado de error

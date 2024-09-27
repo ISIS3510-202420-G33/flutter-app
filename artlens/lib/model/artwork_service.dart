@@ -6,13 +6,15 @@ import '../entities/comment.dart'; // Asegúrate de importar el modelo Comment
 class ArtworkService {
   // Singleton
   static final ArtworkService _instance = ArtworkService._internal();
+
   factory ArtworkService() {
     return _instance;
   }
+
   ArtworkService._internal();
 
-  // Instancia del ApiAdapter
-  final ApiAdapter apiAdapter = ApiAdapter();
+  // Instancia del ApiAdapter usando el método de instancia
+  final ApiAdapter apiAdapter = ApiAdapter.instance; // Cambiar aquí
 
   // Método para obtener una obra de arte por su ID
   Future<Artwork> fetchArtworkById(int id) async {
@@ -28,7 +30,6 @@ class ArtworkService {
   // Método para obtener los comentarios de una obra de arte por su ID
   Future<List<Comment>> fetchCommentsByArtworkId(int id) async {
     final response = await apiAdapter.get('/artwork/comments/$id');
-    final List<dynamic> jsonResponse = jsonDecode(response.body);
     if (response.statusCode == 200) {
       List<dynamic> jsonData = jsonDecode(response.body);
       return jsonData.map((data) => Comment.fromJson(data)).toList();
