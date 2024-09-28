@@ -1,11 +1,11 @@
-// /lib/routes.dart
 import 'package:flutter/material.dart';
 import 'package:artlens/view/artwork_view.dart';
 import 'package:artlens/view/artist_view.dart';
 import 'package:artlens/view/home_view.dart';
 import 'package:artlens/view/camera_view.dart';
 import 'package:artlens/view/map_view.dart';
-import 'package:artlens/view_model/app_facade.dart'; // Make sure to import AppFacade
+import 'package:artlens/view_model/facade.dart';
+import 'package:artlens/entities/artist.dart';
 
 class Routes {
   static const String home = '/';
@@ -14,7 +14,6 @@ class Routes {
   static const String artist = '/artist';
   static const String map = '/map';
 
-  // Now this function receives the appFacade as an argument
   static Route<dynamic> generateRoute(RouteSettings settings, AppFacade appFacade) {
     switch (settings.name) {
       case home:
@@ -23,9 +22,9 @@ class Routes {
       case artwork:
         if (settings.arguments is Map<String, dynamic>) {
           final args = settings.arguments as Map<String, dynamic>;
-          final int id = args['id'] ?? 0; // You might want to use id from args if applicable
+          final int id = args['id'] ?? 2;
           return MaterialPageRoute(
-            builder: (_) => ArtworkView(id: id, appFacade: appFacade), // Pass appFacade here
+            builder: (_) => ArtworkView(id: id, appFacade: appFacade),
           );
         }
         return MaterialPageRoute(
@@ -38,7 +37,18 @@ class Routes {
         return MaterialPageRoute(builder: (_) => CameraPreviewScreen());
 
       case artist:
-        return MaterialPageRoute(builder: (_) => ArtistView());
+        if (settings.arguments is Map<String, dynamic>) {
+          final args = settings.arguments as Map<String, dynamic>;
+          final Artist artist = args['artist'];
+          return MaterialPageRoute(
+            builder: (_) => ArtistView(artist: artist, appFacade: appFacade),
+          );
+        }
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: Center(child: Text('Invalid arguments for ${settings.name}')),
+          ),
+        );
 
       case map:
         return MaterialPageRoute(builder: (_) => MapView());

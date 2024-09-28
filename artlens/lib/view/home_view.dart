@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
-import '../widgets/custom_button.dart'; // Import the reusable custom button widget
+import '../widgets/custom_button.dart';
 import 'map_view.dart';
 import 'package:artlens/widgets/custom_bottom_nav_bar.dart';
-import '../widgets/custom_app_bar.dart'; // Importa la CustomAppBar
+import '../widgets/custom_app_bar.dart';
 
 class HomeView extends StatefulWidget {
-  // Implementación del patrón Singleton
   static final HomeView _instance = HomeView._internal();
 
-  // Constructor privado para prevenir nuevas instancias
   HomeView._internal();
 
-  // Factory que retorna la misma instancia de HomeView
   factory HomeView() {
     return _instance;
   }
@@ -51,7 +48,7 @@ class _HomeViewState extends State<HomeView> {
     final theme = Theme.of(context); // Access the theme
 
     return Scaffold(
-      appBar: CustomAppBar(title: "HOME", showProfileIcon: true,showBackArrow: false), // Usamos la CustomAppBar
+      appBar: CustomAppBar(title: "HOME", showProfileIcon: true,showBackArrow: false),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

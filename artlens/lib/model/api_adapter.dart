@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class ApiAdapter {
   // URL base para el backend
-  final String baseUrl = 'http://172.28.240.1:8000';
+  final String baseUrl = 'http://192.168.11.24:8000';
 
   // Constructor privado para implementar el Singleton
   ApiAdapter._privateConstructor();

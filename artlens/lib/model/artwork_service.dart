@@ -1,10 +1,9 @@
 import 'dart:convert';
 import '../entities/artwork.dart';
-import '../model/api_adapter.dart'; // Asegúrate de importar tu ApiAdapter
-import '../entities/comment.dart'; // Asegúrate de importar el modelo Comment
+import '../model/api_adapter.dart';
+import '../entities/comment.dart';
 
 class ArtworkService {
-  // Singleton
   static final ArtworkService _instance = ArtworkService._internal();
 
   factory ArtworkService() {
@@ -13,10 +12,8 @@ class ArtworkService {
 
   ArtworkService._internal();
 
-  // Instancia del ApiAdapter usando el método de instancia
-  final ApiAdapter apiAdapter = ApiAdapter.instance; // Cambiar aquí
+  final ApiAdapter apiAdapter = ApiAdapter.instance;
 
-  // Método para obtener una obra de arte por su ID
   Future<Artwork> fetchArtworkById(int id) async {
     final response = await apiAdapter.get('/artwork/$id');
     if (response.statusCode == 200) {
@@ -27,7 +24,6 @@ class ArtworkService {
     }
   }
 
-  // Método para obtener los comentarios de una obra de arte por su ID
   Future<List<Comment>> fetchCommentsByArtworkId(int id) async {
     final response = await apiAdapter.get('/artwork/comments/$id');
     if (response.statusCode == 200) {
@@ -37,4 +33,15 @@ class ArtworkService {
       throw Exception('Failed to load comments: ${response.reasonPhrase}');
     }
   }
+
+  Future<List<Artwork>> fetchArtworksByArtistId(int id) async {
+    final response = await apiAdapter.get('/artwork/artist/$id');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Artwork.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load comments: ${response.reasonPhrase}');
+    }
+  }
+
 }

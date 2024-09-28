@@ -1,11 +1,13 @@
-// /lib/cubits/artwork_cubit.dart
-
 import 'package:bloc/bloc.dart';
 import '../entities/artwork.dart';
+import '../entities/artist.dart';
+import '../entities/museum.dart';
 import '../entities/comment.dart';
 import '../model/artwork_service.dart';
+import '../model/artist_service.dart';
+import '../model/museum_service.dart';
 
-// Definimos los estados que el Cubit puede tener
+
 abstract class ArtworkState {}
 
 class ArtworkInitial extends ArtworkState {}
@@ -13,10 +15,13 @@ class ArtworkInitial extends ArtworkState {}
 class ArtworkLoading extends ArtworkState {}
 
 class ArtworkLoaded extends ArtworkState {
-  final Artwork artwork;
-  final List<Comment> comments;
+  final Artwork? artwork;
+  final Artist? artist;
+  final Museum? museum;
+  final List<Comment>? comments;
+  final List<Artwork>? artworksByArtistId;
 
-  ArtworkLoaded(this.artwork, this.comments);
+  ArtworkLoaded({this.artwork, this.artist, this.museum, this.comments, this.artworksByArtistId});
 }
 
 class ArtworkError extends ArtworkState {
@@ -25,21 +30,43 @@ class ArtworkError extends ArtworkState {
   ArtworkError(this.message);
 }
 
-// Definimos el Cubit que maneja el estado relacionado con Artwork
 class ArtworkCubit extends Cubit<ArtworkState> {
   final ArtworkService artworkService;
+  final ArtistService artistService;
+  final MuseumService museumService;
 
-  ArtworkCubit(this.artworkService) : super(ArtworkInitial());
+  ArtworkCubit(this.artworkService, this.artistService, this.museumService) : super(ArtworkInitial());
 
-  // Método para obtener una obra de arte por su ID y los comentarios
-  Future<void> fetchArtworkAndComments(int id) async {
+  Future<void> fetchArtworkById(int id) async {
     try {
-      emit(ArtworkLoading()); // Emitimos el estado de carga
+      emit(ArtworkLoading());
       final artwork = await artworkService.fetchArtworkById(id);
-      final comments = await artworkService.fetchCommentsByArtworkId(id);;
-      emit(ArtworkLoaded(artwork, comments)); // Emitimos el estado cargado con los datos
+      emit(ArtworkLoaded(artwork: artwork));
     } catch (e) {
-      emit(ArtworkError('Error fetching artwork and comments: ${e.toString()}')); // Emitimos estado de error
+      emit(ArtworkError('Error fetching artwork: ${e.toString()}'));
+    }
+  }
+
+  Future<void> fetchArtworkAndRelatedEntities(int id) async {
+    try {
+      emit(ArtworkLoading());
+      final artwork = await artworkService.fetchArtworkById(id);
+      final artist = await artistService.fetchArtistById(artwork.artist);
+      final museum = await museumService.fetchMuseumById(artwork.museum);
+      final comments = await artworkService.fetchCommentsByArtworkId(id);
+      emit(ArtworkLoaded(artwork: artwork, artist: artist, museum: museum, comments: comments));
+    } catch (e) {
+      emit(ArtworkError('Error fetching artwork and related entities: ${e.toString()}'));
+    }
+  }
+
+  Future<void> fetchArtworksByArtistId(int id) async {
+    try {
+      emit(ArtworkLoading());
+      final artworksByArtistId = await artworkService.fetchArtworksByArtistId(id);
+      emit(ArtworkLoaded(artworksByArtistId: artworksByArtistId));
+    } catch (e) {
+      emit(ArtworkError('Error fetching artworks by artist id: ${e.toString()}'));
     }
   }
 }

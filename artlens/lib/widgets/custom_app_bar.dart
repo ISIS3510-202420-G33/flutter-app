@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../view/login_view.dart';  // Asegúrate de importar la vista de Login
+import '../view/login_view.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final bool showProfileIcon;  // Controla si se muestra el ícono de perfil
-  final bool showBackArrow;    // Nuevo parámetro para controlar si se muestra la flecha
+  final bool showProfileIcon;
+  final bool showBackArrow;
 
   CustomAppBar({
     required this.title,
     this.showProfileIcon = true,
-    this.showBackArrow = true,  // Por defecto muestra la flecha
+    this.showBackArrow = true,
   });
 
   @override
@@ -25,12 +25,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
         // AppBar
         Transform.translate(
-          offset: const Offset(0, 6), // Ajusta el AppBar ligeramente hacia abajo
+          offset: const Offset(0, 6),
           child: AppBar(
             backgroundColor: Colors.white,
             leading: showBackArrow
                 ? Padding(
-              padding: const EdgeInsets.only(left: 16.0), // Mueve la flecha hacia la derecha
+              padding: const EdgeInsets.only(left: 16.0),
               child: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.black),
                 onPressed: () {
@@ -43,12 +43,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             )
                 : null, // No muestra el ícono de flecha si `showBackArrow` es `false`
-            centerTitle: true, // Centra el título
+            centerTitle: true,
             title: Text(
               title,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Theme.of(context).colorScheme.onPrimary,
-                fontWeight: FontWeight.w800, // Extra bold para el título
+                fontWeight: FontWeight.w800,
               ), // Aplica el estilo global del tema
             ),
             actions: showProfileIcon
@@ -94,5 +94,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 12); // Ajustar el tamaño total para incluir las líneas
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight + 12);
 }

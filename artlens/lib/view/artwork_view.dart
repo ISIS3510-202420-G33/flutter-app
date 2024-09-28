@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../routes.dart';
-import '../view_model/app_facade.dart';
+import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
-import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import '../widgets/custom_app_bar.dart';
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -36,8 +36,8 @@ class _ArtworkViewState extends State<ArtworkView> {
   @override
   void initState() {
     super.initState();
-    // Cargar los datos del Artwork y sus comentarios
-    widget.appFacade.fetchArtworkAndComments(widget.id);
+    print("Hola " + widget.id.toString());
+    widget.appFacade.fetchArtworkAndRelatedEntities(widget.id);
   }
 
   // Método para manejar la navegación
@@ -52,14 +52,12 @@ class _ArtworkViewState extends State<ArtworkView> {
     });
   }
 
-  // Método para cambiar el estado de "me gusta"
   void _onLikePressed() {
     setState(() {
       _isLiked = !_isLiked;
     });
   }
 
-  // Método para alternar la visibilidad del foro
   void _toggleForum() {
     setState(() {
       _isForumOpen = !_isForumOpen;
@@ -78,22 +76,24 @@ class _ArtworkViewState extends State<ArtworkView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // Accede al tema actual
+    final theme = Theme.of(context);
 
     return Scaffold(
-        appBar: CustomAppBar(title: "ARTWORK"),
+        appBar: CustomAppBar(title: "HOME", showProfileIcon: true,showBackArrow: true),
         body: BlocBuilder<ArtworkCubit, ArtworkState>(
-          bloc: widget.appFacade.artworkCubit,  // Usa el Cubit desde la fachada
+          bloc: widget.appFacade.artworkCubit,
           builder: (context, state) {
             if (state is ArtworkLoading) {
               // Muestra un spinner de carga mientras los datos se cargan
               return Center(child: CircularProgressIndicator());
             } else if (state is ArtworkLoaded) {
               final artwork = state.artwork;
+              final artist = state.artist;
+              final museum = state.museum;
               final comments = state.comments;
 
               return ScrollConfiguration(
-                behavior: NoGlowScrollBehavior(), // Eliminar el efecto de "glow" en el scroll
+                behavior: NoGlowScrollBehavior(),
                 child: RawScrollbar(
                   thumbVisibility: true,
                   thickness: 6.0,
@@ -115,7 +115,7 @@ class _ArtworkViewState extends State<ArtworkView> {
                                   padding: const EdgeInsets.only(right: 32.0),
                                   child: Center(
                                     child: Text(
-                                      artwork.name,
+                                      artwork?.name ?? "Unknown Artwork",
                                       style: theme.textTheme.headlineMedium,
                                       textAlign: TextAlign.center,
                                     ),
@@ -145,7 +145,7 @@ class _ArtworkViewState extends State<ArtworkView> {
                           child: Container(
                             constraints: BoxConstraints(maxWidth: 280, maxHeight: 350),
                             child: Image.network(
-                              artwork.image, // Usa el campo image de la obra de arte
+                              artwork?.image ?? 'https://via.placeholder.com/150',
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -156,10 +156,10 @@ class _ArtworkViewState extends State<ArtworkView> {
                         Padding(
                           padding: const EdgeInsets.only(left: 32.0, top: 16.0),
                           child: Text(
-                            "Artist: ${artwork.artist}\n"
-                                "Technique: ${artwork.technique}\n"
-                                "Dimensions: ${artwork.dimensions}\n"
-                                "Museum: ${artwork.museum}",
+                            "Artist: ${artist?.name}\n"
+                                "Technique: ${artwork?.technique ?? "N/A"}\n"
+                                "Dimensions: ${artwork?.dimensions ?? "N/A"}\n"
+                                "Museum: ${museum?.name ?? "N/A"}",
                             style: theme.textTheme.bodyMedium,
                           ),
                         ),
@@ -179,7 +179,17 @@ class _ArtworkViewState extends State<ArtworkView> {
                                 ),
                               ),
                               onPressed: () {
-                                Navigator.pushNamed(context, Routes.artist);
+                                if (artist != null) {
+                                  Navigator.pushNamed(
+                                    context,
+                                    Routes.artist,
+                                    arguments: {'artist': artist},
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Artist details are not available')),
+                                  );
+                                }
                               },
                               child: Text(
                                 "View Artist Details",
@@ -200,12 +210,16 @@ class _ArtworkViewState extends State<ArtworkView> {
                                 // Acción para reproducir la narración de audio
                               },
                             ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Text(
-                                "Click the icon to start the audio narration.",
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Text(
+                                  "Click the icon to start the audio narration.",
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  softWrap: true,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ),
@@ -217,7 +231,7 @@ class _ArtworkViewState extends State<ArtworkView> {
                         Padding(
                           padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
                           child: Text(
-                            artwork.interpretation,
+                            artwork?.interpretation ?? "Unknown Interpretation",
                             style: theme.textTheme.bodyMedium,
                           ),
                         ),
@@ -286,10 +300,10 @@ class _ArtworkViewState extends State<ArtworkView> {
                                 ListView.builder(
                                   shrinkWrap: true,
                                   physics: const NeverScrollableScrollPhysics(),
-                                  itemCount: comments.length,
+                                  itemCount: comments?.length ?? 0,
                                   itemBuilder: (context, index) {
                                     return ListTile(
-                                      title: Text(comments[index].content),
+                                      title: Text(comments![index].content),
                                     );
                                   },
                                 ),
