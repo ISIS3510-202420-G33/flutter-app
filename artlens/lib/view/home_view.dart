@@ -22,7 +22,7 @@ class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
 
   // Define a function to handle navigation
-    void _onItemTapped(int index) {
+  void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
       if (index == 0) {
@@ -48,53 +48,74 @@ class _HomeViewState extends State<HomeView> {
     final theme = Theme.of(context); // Access the theme
 
     return Scaffold(
-      appBar: CustomAppBar(title: "HOME", showProfileIcon: true,showBackArrow: false),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                "Welcome to ArtLens!",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.displayLarge, // Using displayLarge from the theme
+      appBar: CustomAppBar(title: "HOME", showProfileIcon: true, showBackArrow: false),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Content inside a LayoutBuilder to check if scrolling is needed
+          return RawScrollbar(
+            thumbVisibility: true, // Scrollbar will appear when needed
+            thickness: 6.0,
+            radius: const Radius.circular(15),
+            thumbColor: theme.colorScheme.secondary,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              physics: constraints.maxHeight < 600
+                  ? const AlwaysScrollableScrollPhysics()
+                  : const NeverScrollableScrollPhysics(), // Allow scroll only if necessary
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // Centers content vertically
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Text(
+                          "Welcome to ArtLens!",
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.displayLarge, // Using displayLarge from the theme
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Museums in your city",
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyLarge, // Using bodyLarge from the theme
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Three custom buttons using the reusable widget
+                      CustomButton(
+                        label: "View all museums",
+                        onPressed: () {
+                          // Define button action
+                        },
+                      ),
+                      CustomButton(
+                        label: "View Map",
+                        onPressed: () {
+                          // Navigate to the map view
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const MapView()),
+                          );
+                        },
+                      ),
+                      CustomButton(
+                        label: "View Artists",
+                        onPressed: () {
+                          // Define button action
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "Museums in your city",
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge, // Using bodyLarge from the theme
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Three custom buttons using the reusable widget
-            CustomButton(
-              label: "View all museums",
-              onPressed: () {
-                // Define button action
-              },
-            ),
-            CustomButton(
-              label: "View Map",
-              onPressed: () {
-                // Navegar a la vista del mapa
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MapView()),
-                );
-              },
-            ),
-            CustomButton(
-              label: "View Artists",
-              onPressed: () {
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
       bottomNavigationBar: CustomBottomNavBar(
         selectedIndex: _selectedIndex,

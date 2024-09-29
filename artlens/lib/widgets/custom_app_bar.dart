@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../view/login_view.dart';
+import '../view_model/auth_cubit.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -13,8 +16,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.showBackArrow = true,
   });
 
+  Future<String?> _getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userName');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authCubit = context.read<AuthCubit>(); // Access AuthCubit to check authentication state
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -71,12 +81,65 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ),
                   ),
-                  onPressed: () {
-                    // Navegar a la vista de Login
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => LoginPage()), // Navegar a LoginPage
-                    );
+                  onPressed: () async {
+                    if (authCubit.isLoggedIn()) {
+                      // Fetch userName from SharedPreferences
+                      String? userName = await _getUserName();
+
+                      // Show a custom dialog
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20.0),
+                            ),
+                            contentPadding: const EdgeInsets.all(16.0),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'Hi, $userName!',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Divider(),
+                                ListTile(
+                                  leading: Icon(Icons.favorite),
+                                  title: Text('View Favorites'),
+                                  onTap: () {
+                                    Navigator.pop(context); // Close the dialog
+                                    Navigator.pushNamed(context, '/favorites');
+                                  },
+                                ),
+                                ListTile(
+                                  leading: Icon(Icons.logout),
+                                  title: Text('Log Out'),
+                                  onTap: () {
+                                    Navigator.pop(context); // Close the dialog
+                                    authCubit.logOut();
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => LoginPage()),
+                                    );
+                                  },
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    } else {
+                      // Navigate to LoginPage if the user is not logged in
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => LoginPage()),
+                      );
+                    }
                   },
                 ),
               ),

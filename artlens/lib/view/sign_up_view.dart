@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../view_model/facade.dart';  // Importa la fachada
+import '../view_model/auth_cubit.dart';  // Importa AuthCubit para loguear automáticamente
 import '../widgets/custom_app_bar.dart';
 
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
   static final SignUpPage _instance = SignUpPage._internal();
 
   SignUpPage._internal();
@@ -11,7 +14,33 @@ class SignUpPage extends StatelessWidget {
   }
 
   @override
+  _SignUpPageState createState() => _SignUpPageState();
+}
+
+class _SignUpPageState extends State<SignUpPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _userNameController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+
+  // Limpiar los controladores cuando el widget sea destruido
+  @override
+  void dispose() {
+    _emailController.clear();
+    _userNameController.clear();
+    _nameController.clear();
+    _passwordController.clear();
+    _confirmPasswordController.clear();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final appFacade = context.read<AppFacade>();  // Obtener la fachada
+    final authCubit = context.read<AuthCubit>();  // Obtener AuthCubit para loguear automáticamente
+    final theme = Theme.of(context);  // Obtener el tema para el color naranja
+
     // Usamos MediaQuery para obtener el tamaño de la pantalla
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -27,7 +56,9 @@ class SignUpPage extends StatelessWidget {
 
             // Campos de Texto
             TextField(
-              style: TextStyle(color: Colors.grey),
+              controller: _emailController,
+              cursorColor: Colors.black,
+              style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 labelText: 'Email address',
                 labelStyle: TextStyle(color: Colors.grey),
@@ -42,7 +73,9 @@ class SignUpPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
-              style: TextStyle(color: Colors.grey),
+              controller: _userNameController,
+              cursorColor: Colors.black,
+              style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 labelText: 'Username',
                 labelStyle: TextStyle(color: Colors.grey),
@@ -57,7 +90,9 @@ class SignUpPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
-              style: TextStyle(color: Colors.grey),
+              controller: _nameController,
+              cursorColor: Colors.black,
+              style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 labelText: 'Name',
                 labelStyle: TextStyle(color: Colors.grey),
@@ -72,8 +107,10 @@ class SignUpPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
+              controller: _passwordController,
               obscureText: true,
-              style: TextStyle(color: Colors.grey),
+              cursorColor: Colors.black,
+              style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 labelText: 'Password',
                 labelStyle: TextStyle(color: Colors.grey),
@@ -88,8 +125,10 @@ class SignUpPage extends StatelessWidget {
             ),
             SizedBox(height: 16),
             TextField(
+              controller: _confirmPasswordController,
               obscureText: true,
-              style: TextStyle(color: Colors.grey),
+              cursorColor: Colors.black,
+              style: TextStyle(color: Colors.black),
               decoration: InputDecoration(
                 labelText: 'Confirm password',
                 labelStyle: TextStyle(color: Colors.grey),
@@ -115,8 +154,60 @@ class SignUpPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(25),
                   ),
                 ),
-                onPressed: () {
-                  // Acción de registro
+                onPressed: () async {
+                  // Aplica trim() a los campos de texto relevantes
+                  String email = _emailController.text.trim();
+                  String userName = _userNameController.text.trim();
+                  String name = _nameController.text.trim();
+                  String password = _passwordController.text;
+                  String confirmPassword = _confirmPasswordController.text;
+
+                  // Validaciones
+                  if (!_isValidEmail(email)) {
+                    _showErrorSnackBar(context, 'Please enter a valid email.');
+                    return;
+                  }
+                  if (!_isValidUsername(userName)) {
+                    _showErrorSnackBar(context, 'Username cannot have spaces or special characters.');
+                    return;
+                  }
+                  if (name.isEmpty) {
+                    _showErrorSnackBar(context, 'Please enter your name.');
+                    return;
+                  }
+                  if (!_isValidPassword(password)) {
+                    _showErrorSnackBar(context, 'Password must be at least 8 characters, contain a number, a capital letter, and a special character.');
+                    return;
+                  }
+                  if (password != confirmPassword) {
+                    _showErrorSnackBar(context, 'Passwords do not match.');
+                    return;
+                  }
+
+                  // Intentar registrar al usuario
+                  String? result = await appFacade.registerUser(name, userName, email, password);
+
+                  if (result == 'success') {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: theme.colorScheme.secondary,  // Usar color naranja
+                        content: Text('Registration successful! Logging in...'),
+                      ),
+                    );
+
+                    // Iniciar sesión automáticamente
+                    await appFacade.authenticateUser(userName, password);
+
+                    if (appFacade.isLoggedIn()) {
+                      Navigator.pushNamed(context, '/');  // Redirige al home si el login es exitoso
+                    } else {
+                      _showErrorSnackBar(context, 'Error logging in after registration.');
+                    }
+                  } else if (result == 'error') {
+                    _showErrorSnackBar(context, 'User or email already exists.');
+                  } else {
+                    _showErrorSnackBar(context, 'An unexpected error occurred.');
+                  }
                 },
                 child: Text('Sign Up', style: TextStyle(color: Colors.white)),
               ),
@@ -124,7 +215,7 @@ class SignUpPage extends StatelessWidget {
             SizedBox(height: 16),
 
             // Espacio dinámico basado en el tamaño de la pantalla
-            SizedBox(height: screenHeight * 0.125),  // Ajusta el porcentaje según sea necesario
+            SizedBox(height: screenHeight * 0.125),
 
             // Botón "Already have an account?"
             SizedBox(
@@ -148,5 +239,33 @@ class SignUpPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  // Método para mostrar un SnackBar con errores
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
+  // Validar email
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(email);
+  }
+
+  // Validar username (sin espacios ni caracteres especiales)
+  bool _isValidUsername(String username) {
+    return RegExp(r'^[a-zA-Z0-9]+$').hasMatch(username);
+  }
+
+  // Validar contraseña (mínimo 8 caracteres, un número, una mayúscula, y un carácter especial)
+  bool _isValidPassword(String password) {
+    return password.length >= 8 &&
+        RegExp(r'[0-9]').hasMatch(password) &&
+        RegExp(r'[A-Z]').hasMatch(password) &&
+        RegExp(r'[!@#\$&*~]').hasMatch(password);
   }
 }

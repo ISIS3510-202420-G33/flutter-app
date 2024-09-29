@@ -2,19 +2,30 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiAdapter {
-  // URL base para el backend
-  final String baseUrl = 'http://192.168.11.24:8000';
+  final String baseUrl = 'http://192.168.5.105:8000';
 
-  // Constructor privado para implementar el Singleton
-  ApiAdapter._privateConstructor();
-
-  // Instancia única de la clase
   static final ApiAdapter _instance = ApiAdapter._privateConstructor();
 
-  // Método para obtener la instancia
+  ApiAdapter._privateConstructor();
+
   static ApiAdapter get instance => _instance;
 
-  // Método para hacer peticiones GET
+  // Method for POST requests
+  Future<http.Response> post(String endpoint, Map<String, dynamic> body) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      return response;
+    } catch (e) {
+      throw Exception('Failed to post data: $e');
+    }
+  }
+
+  // Method for GET requests
   Future<http.Response> get(String endpoint) async {
     final url = Uri.parse('$baseUrl$endpoint');
     try {
@@ -25,5 +36,14 @@ class ApiAdapter {
     }
   }
 
-// Aquí puedes añadir más métodos (POST, PUT, DELETE, etc.) si es necesario
+  // Method for DELETE requests
+  Future<http.Response> delete(String endpoint) async {
+    final url = Uri.parse('$baseUrl$endpoint');
+    try {
+      final response = await http.delete(url);
+      return response;
+    } catch (e) {
+      throw Exception('Failed to delete data: $e');
+    }
+  }
 }

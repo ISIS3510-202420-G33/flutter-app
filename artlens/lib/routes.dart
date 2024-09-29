@@ -4,6 +4,8 @@ import 'package:artlens/view/artist_view.dart';
 import 'package:artlens/view/home_view.dart';
 import 'package:artlens/view/camera_view.dart';
 import 'package:artlens/view/map_view.dart';
+import 'package:artlens/view/sign_up_view.dart'; // Importa tu SignUpPage
+import 'package:artlens/view/favorites_view.dart'; // Importa tu FavoritesView
 import 'package:artlens/view_model/facade.dart';
 import 'package:artlens/entities/artist.dart';
 
@@ -13,6 +15,8 @@ class Routes {
   static const String camera = '/camera';
   static const String artist = '/artist';
   static const String map = '/map';
+  static const String signUp = '/signUp';
+  static const String favorites = '/favorites'; // Añadir la ruta de Favorites
 
   static Route<dynamic> generateRoute(RouteSettings settings, AppFacade appFacade) {
     switch (settings.name) {
@@ -52,6 +56,12 @@ class Routes {
 
       case map:
         return MaterialPageRoute(builder: (_) => MapView());
+
+      case signUp:
+        return MaterialPageRoute(builder: (_) => SignUpPage());
+
+      case favorites: // Añadir el caso para Favorites
+        return MaterialPageRoute(builder: (_) => FavoritesView());
 
       default:
         return MaterialPageRoute(
