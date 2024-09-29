@@ -1,134 +1,191 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../widgets/custom_app_bar.dart';
-import 'sign_up_view.dart';  // Importa la vista de SignUpPage
+import '../view_model/auth_cubit.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../view_model/facade.dart';
 
-class LoginPage extends StatelessWidget {
-  static final LoginPage _instance = LoginPage._internal();
+class LoginPage extends StatefulWidget {
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
 
-  LoginPage._internal();
-
-  factory LoginPage() {
-    return _instance;
-  }
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _userNameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    // Usamos MediaQuery para obtener el tamaño de la pantalla
-    final screenHeight = MediaQuery.of(context).size.height;
+    final theme = Theme.of(context);
+    final appFacade = context.read<AppFacade>();
 
     return Scaffold(
-      appBar: CustomAppBar(title: "LOG IN", showProfileIcon: false),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(height: 32),
-            // Ícono de usuario dentro de un círculo negro aún más prominente
-            Container(
-              padding: const EdgeInsets.all(25.0), // Aumentamos más el padding para más negro
-              decoration: const BoxDecoration(
-                color: Colors.black, // Fondo negro
-                shape: BoxShape.circle,
-              ),
-              child: SvgPicture.asset(
-                'assets/images/user-solid.svg',
-                height: 70, // Reduce ligeramente el tamaño del ícono para más fondo negro
-                width: 70,
-                color: Colors.white, // Ícono blanco
-              ),
-            ),
-            SizedBox(height: 32),
+      appBar: CustomAppBar(
+        title: "Log In",
+        showProfileIcon: false,
+        showBackArrow: false,
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          bool isScrollable = constraints.maxHeight < 600;
 
-            // Campos de Texto
-            TextField(
-              style: TextStyle(color: Colors.grey),
-              decoration: InputDecoration(
-                labelText: 'Username or email',
-                labelStyle: TextStyle(color: Colors.grey),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
+          return RawScrollbar(
+            thumbVisibility: isScrollable,
+            thickness: 6.0,
+            radius: const Radius.circular(15),
+            thumbColor: theme.colorScheme.secondary,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              physics: isScrollable
+                  ? const AlwaysScrollableScrollPhysics()
+                  : const NeverScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              obscureText: true,
-              style: TextStyle(color: Colors.grey),
-              decoration: InputDecoration(
-                labelText: 'Password',
-                labelStyle: TextStyle(color: Colors.grey),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderSide: BorderSide(color: Colors.grey),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            SizedBox(height: 32),
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: constraints.maxHeight * 0.1),
+                      // User Icon
+                      Container(
+                        padding: const EdgeInsets.all(25.0),
+                        decoration: const BoxDecoration(
+                          color: Colors.black,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.person, color: Colors.white, size: 70),
+                      ),
+                      SizedBox(height: 32),
+                      // Username input
+                      TextField(
+                        controller: _userNameController,
+                        cursorColor: Colors.black,
+                        decoration: InputDecoration(
+                          labelText: 'Username',
+                          labelStyle: TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      // Password input
+                      TextField(
+                        controller: _passwordController,
+                        cursorColor: Colors.black,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Password',
+                          labelStyle: TextStyle(color: Colors.grey),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 32),
+                      // Log In button
+                      SizedBox(
+                        width: 200,
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          onPressed: () async {
+                            print('Presionaste el botón de Log In');
+                            await appFacade.authenticateUser(
+                              _userNameController.text,
+                              _passwordController.text,
+                            );
 
-            // Botón de inicio de sesión
-            SizedBox(
-              width: 200,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+                            if (appFacade.isLoggedIn()) {
+                              // Show success SnackBar with orange color
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: theme.colorScheme.secondary,  // Naranja
+                                  content: Row(
+                                    children: [
+                                      Icon(Icons.check_circle, color: Colors.white),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        'Login successful!',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ],
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+
+                              // Navigate to home immediately
+                              Navigator.pushNamed(context, '/');
+                            } else {
+                              // Show error SnackBar
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  backgroundColor: Colors.red,
+                                  content: Row(
+                                    children: [
+                                      Icon(Icons.error, color: Colors.white),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        'Invalid username or password.',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ],
+                                  ),
+                                  behavior: SnackBarBehavior.floating,
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          child: Text('Log In', style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      TextButton(
+                        onPressed: () {},
+                        child: Text('Forgot password?', style: TextStyle(color: Colors.black)),
+                      ),
+                      SizedBox(height: constraints.maxHeight * 0.1),
+                      SizedBox(
+                        width: 250,
+                        height: 48,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: theme.colorScheme.secondary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(25),
+                            ),
+                          ),
+                          onPressed: () {
+                            Navigator.pushNamed(context, '/signUp');
+                          },
+                          child: Text('Create new account', style: TextStyle(color: Colors.white)),
+                        ),
+                      ),
+                      SizedBox(height: 32),
+                    ],
                   ),
                 ),
-                onPressed: () {
-                  // Acción de inicio de sesión
-                },
-                child: Text('Log In', style: TextStyle(color: Colors.white)),
               ),
             ),
-            SizedBox(height: 16),
-
-            // Forgot password
-            TextButton(
-              onPressed: () {
-                // Acción de "Forgot Password"
-              },
-              child: Text('Forgot password?', style: TextStyle(color: Colors.black)),
-            ),
-
-            // Espacio dinámico basado en el tamaño de la pantalla
-            SizedBox(height: screenHeight * 0.25), // Ajusta el porcentaje según sea necesario
-
-            // Botón de Crear Cuenta
-            SizedBox(
-              width: 250,
-              height: 48,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.secondary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                ),
-                onPressed: () {
-                  // Navegación a la vista de Sign Up
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SignUpPage()),
-                  );
-                },
-                child: Text('Create new account', style: TextStyle(color: Colors.white)),
-              ),
-            ),
-            SizedBox(height: 32),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

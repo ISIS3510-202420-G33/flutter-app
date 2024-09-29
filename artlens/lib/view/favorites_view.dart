@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../view_model/favorites_cubit.dart';
 import '../widgets/custom_app_bar.dart';
-import '../widgets/custom_bottom_nav_bar.dart'; // Asegúrate de importar tu CustomBottomNavBar
+import '../widgets/custom_bottom_nav_bar.dart';
+import '../entities/artwork.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import '../routes.dart'; // Para la navegación a ArtworkView
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -9,102 +14,164 @@ class NoGlowScrollBehavior extends ScrollBehavior {
   }
 }
 
-class FavoritesView extends StatelessWidget {
+class FavoritesView extends StatefulWidget {
+  @override
+  _FavoritesViewState createState() => _FavoritesViewState();
+}
+
+class _FavoritesViewState extends State<FavoritesView> {
+  int? userId;
+  Map<int, bool> isPressed = {}; // Map para controlar qué íconos han sido presionados
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId(); // Carga el userId desde SharedPreferences y luego obtiene los favoritos
+  }
+
+  // Carga el userId desde SharedPreferences
+  Future<void> _loadUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userId = prefs.getInt('userId');
+    });
+
+    if (userId != null) {
+      // Obtén los favoritos del usuario
+      context.read<FavoritesCubit>().fetchFavorites(userId!);
+    }
+  }
+
+  // Función para truncar texto (interpretación) a una longitud específica y agregar "..."
+  String _truncateText(String text, int maxLength) {
+    if (text.length > maxLength) {
+      return '${text.substring(0, maxLength)}...';
+    }
+    return text;
+  }
+
+  // Alternativamente, puedes limitar la cantidad de palabras en lugar de caracteres:
+  String _truncateWords(String text, int maxWords) {
+    List<String> words = text.split(' ');
+    if (words.length > maxWords) {
+      return '${words.sublist(0, maxWords).join(' ')}...';
+    }
+    return text;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Lista de obras favoritas simuladas
-    final List<Map<String, String>> favorites = [
-      {
-        'title': 'Nighthawks',
-        'description': '"Nighthawks" is a painting by American artist Edward Hopper, depicting four people in an urban diner at night.',
-        'imageUrl': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Nighthawks_by_Edward_Hopper_1942.jpg/800px-Nighthawks_by_Edward_Hopper_1942.jpg',
-      },
-      {
-        'title': 'The scream',
-        'description': '"The Scream" is the title of four paintings by Norwegian artist Edvard Munch. The most famous version is located at the National Gallery of Norway.',
-        'imageUrl': 'https://www.edvardmunch.org/assets/img/thumbs/the-scream.jpg',
-      },
-      // Más obras para probar el scroll
-      {
-        'title': 'Starry Night',
-        'description': 'A famous painting by Vincent van Gogh, depicting a swirling night sky over a quiet town.',
-        'imageUrl': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDuXRsUi_vW5fZKRvlB41OoexUjhckdOrURQ&s'
-      },
-      {
-        'title': 'Mona Lisa',
-        'description': 'A portrait painting by Leonardo da Vinci, one of the most famous paintings in the world.',
-        'imageUrl': 'https://t1.gstatic.com/licensed-image?q=tbn:ANd9GcQsu7yYuRPXNK9eHHSFD2tUYO4stQDb1Ez8vjqGERfs9xqYLLnY_y6lQkPFZa-44cqn',
-      },
-      {
-        'title': 'The Persistence of Memory',
-        'description': 'A surreal painting by Salvador Dalí, showcasing melting clocks in a desert landscape.',
-        'imageUrl': 'https://www.singulart.com/images/artworks/v2/cropped/54718/alts/alt_2047336_1be4af8aaf321cda716f08bd62d9ba3e.jpeg',
-      },
-    ];
+    final favoritesCubit = context.read<FavoritesCubit>();
 
     return Scaffold(
       appBar: CustomAppBar(title: "FAVORITES", showProfileIcon: false),
-      body: ScrollConfiguration(
-        behavior: NoGlowScrollBehavior(), // Usamos la clase personalizada para eliminar el glow
-        child: RawScrollbar(
-          thumbVisibility: true, // La barra de desplazamiento siempre está visible
-          thickness: 6.0, // Grosor de la barra de desplazamiento
-          radius: const Radius.circular(15), // Curvatura de la barra
-          thumbColor: Theme.of(context).colorScheme.secondary, // Aquí aplicamos el color secundario
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-            itemCount: favorites.length,
-            itemBuilder: (context, index) {
-              final artwork = favorites[index];
-              return Column(
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Imagen de la obra
-                      Image.network(
-                        artwork['imageUrl']!,
-                        height: 100,
-                        width: 100,
-                        fit: BoxFit.cover,
-                      ),
-                      const SizedBox(width: 16),
-                      // Título y descripción
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+      body: BlocBuilder<FavoritesCubit, FavoritesState>(
+        builder: (context, state) {
+          if (state.isLoading) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (state.error != null) {
+            return Center(child: Text('Error loading favorites: ${state.error}'));
+          }
+
+          if (state.favorites.isEmpty) {
+            return Center(child: Text('No favorites found.'));
+          }
+
+          return ScrollConfiguration(
+            behavior: NoGlowScrollBehavior(),
+            child: RawScrollbar(
+              thumbVisibility: true,
+              thickness: 6.0,
+              radius: const Radius.circular(15),
+              thumbColor: Theme.of(context).colorScheme.secondary,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                itemCount: state.favorites.length,
+                itemBuilder: (context, index) {
+                  final Artwork artwork = state.favorites[index];
+                  bool iconPressed = isPressed[artwork.id] ?? false;
+
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.pushNamed(
+                        context,
+                        Routes.artwork,
+                        arguments: {'id': artwork.id},
+                      );
+                    },
+                    child: Column(
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,  // Centrar verticalmente todo el contenido de la fila
                           children: [
-                            Text(
-                              artwork['title']!,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            // Imagen centrada verticalmente
+                            Image.network(
+                              artwork.image,
+                              height: 100,
+                              width: 100,
+                              fit: BoxFit.cover,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              artwork['description']!,
-                              style: const TextStyle(fontSize: 14),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    artwork.name,
+                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Aquí se trunca el texto de la interpretación
+                                  Text(
+                                    _truncateWords(artwork.interpretation, 20), // Puedes ajustar el límite de palabras
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Icono de eliminación con efecto de color al ser presionado
+                            InkWell(
+                              onTap: () async {
+                                // Cambiar el estado del icono a "presionado"
+                                setState(() {
+                                  isPressed[artwork.id] = true;
+                                });
+
+                                // Espera medio segundo antes de ejecutar la eliminación y restaurar el color
+                                await Future.delayed(const Duration(milliseconds: 500));
+
+                                if (userId != null) {
+                                  favoritesCubit.removeFavorite(userId!, artwork.id);
+                                }
+
+                                // Restaurar el estado del icono a "no presionado"
+                                setState(() {
+                                  isPressed[artwork.id] = false;
+                                });
+                              },
+                              child: Icon(
+                                Icons.delete,
+                                color: iconPressed
+                                    ? Theme.of(context).colorScheme.secondary // Cambia a naranja cuando se presiona
+                                    : Colors.black, // Color original
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      // Botón de eliminación
-                      IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          // Acción para eliminar la obra de la lista de favoritos
-                        },
-                      ),
-                    ],
-                  ),
-                  const Divider(thickness: 1, height: 32), // Separador entre las obras
-                ],
-              );
-            },
-          ),
-        ),
+                        const Divider(thickness: 1, height: 32),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        },
       ),
-      // Uso de tu CustomBottomNavBar
       bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: 2, // Indica la pestaña actual
+        selectedIndex: 2,
         onItemTapped: (index) {
           // Manejar la navegación cuando se toquen los elementos de la barra
         },
