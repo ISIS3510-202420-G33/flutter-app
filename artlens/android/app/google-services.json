@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "896869029601",
+    "project_id": "isis-3510",
+    "storage_bucket": "isis-3510.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:896869029601:android:52dd320f00eca7a1ca49a0",
+        "android_client_info": {
+          "package_name": "com.example.artlens"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7tzb8pOSCnPg9M_oPCdwytPRvKmgH2Bo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
