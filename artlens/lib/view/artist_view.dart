@@ -130,42 +130,52 @@ class _ArtistViewState extends State<ArtistView> {
     );
   }
 
-  // Widget to display the list of artworks in a horizontal scroll carousel
   Widget _buildArtworksCarousel(List<Artwork>? artworks) {
     if (artworks == null || artworks.isEmpty) {
       return Center(child: Text('No artworks available.'));
     }
     return SizedBox(
-      height: 200, // Increased height to make the carousel more prominent
+      height: 200,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: artworks.length,
         itemBuilder: (context, index) {
           final artwork = artworks[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Column(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12.0), // Rounded corners for images
-                  child: Image.network(
-                    artwork.image,
-                    width: 150, // Larger image width
-                    height: 150, // Larger image height
-                    fit: BoxFit.cover,
+          return GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pop(context);
+              Navigator.pushNamed(
+                context,
+                Routes.artwork,
+                arguments: {'id': artwork.id},
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Column(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: Image.network(
+                      artwork.image,
+                      width: 150,
+                      height: 150,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  artwork.name,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
+                  SizedBox(height: 8),
+                  Text(
+                    artwork.name,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
