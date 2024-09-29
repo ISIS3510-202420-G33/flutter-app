@@ -29,6 +29,7 @@ class ArtworkView extends StatefulWidget {
 }
 
 class _ArtworkViewState extends State<ArtworkView> {
+  int? _artworkId;
   int _selectedIndex = 1;
   bool _isLiked = false;
   bool _isForumOpen = false;
@@ -41,7 +42,7 @@ class _ArtworkViewState extends State<ArtworkView> {
   @override
   void initState() {
     super.initState();
-    print("Hola " + widget.id.toString());
+    _artworkId = widget.id;
     widget.appFacade.fetchArtworkAndRelatedEntities(widget.id);
 
     // Configura los parámetros iniciales de TTS
@@ -215,13 +216,18 @@ class _ArtworkViewState extends State<ArtworkView> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            onPressed: () {
+                            onPressed: () async {
                               if (artist != null) {
-                                Navigator.pushNamed(
+                                await Navigator.pushNamed(
                                   context,
                                   Routes.artist,
                                   arguments: {'artist': artist},
                                 );
+
+                                if (_artworkId != null) {
+                                  widget.appFacade.fetchArtworkAndRelatedEntities(_artworkId!);
+                                }
+
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Artist details are not available')),

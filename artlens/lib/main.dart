@@ -13,9 +13,15 @@ import 'package:artlens/model/artist_service.dart';
 import 'package:artlens/model/museum_service.dart';
 import 'package:artlens/model/user_service.dart'; // Import UserService
 import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Ensures Flutter is properly initialized before async code
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize SharedPreferences before building the app
   SharedPreferences prefs = await SharedPreferences.getInstance();
