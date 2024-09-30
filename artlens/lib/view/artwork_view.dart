@@ -6,6 +6,7 @@ import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
+import '../main.dart'; // Importa el archivo donde está definido `routeObserver`
 import 'package:intl/intl.dart';
 
 
@@ -30,16 +31,14 @@ class ArtworkView extends StatefulWidget {
   _ArtworkViewState createState() => _ArtworkViewState();
 }
 
-class _ArtworkViewState extends State<ArtworkView> {
+class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   int? _artworkId;
   int _selectedIndex = 1;
   bool _isLiked = false;
   bool _isForumOpen = false;
   bool _isPlaying = false; // Controlar si el TTS está reproduciendo
   final TextEditingController _commentController = TextEditingController();
-
-  // Instancia de FlutterTTS
-  final FlutterTts flutterTts = FlutterTts();
+  final FlutterTts flutterTts = FlutterTts(); // Instancia de FlutterTTS
 
   @override
   void initState() {
@@ -48,14 +47,15 @@ class _ArtworkViewState extends State<ArtworkView> {
     widget.appFacade.fetchArtworkAndRelatedEntities(widget.id);
 
     // Configura los parámetros iniciales de TTS
-    flutterTts.setLanguage('en-US'); // Cambia el idioma según tu preferencia
-    flutterTts.setSpeechRate(0.5); // Velocidad de la narración
+    flutterTts.setLanguage('en-US');
+    flutterTts.setSpeechRate(0.5);
+
     _initializeArtwork();
   }
 
   Future<void> _initializeArtwork() async {
-    final favorites = await widget.appFacade.fetchFavorites();  //Trae las obras
-    _checkIfLiked(favorites); // Verifica si la obra está likeada
+    final favorites = await widget.appFacade.fetchFavorites();  // Trae las obras favoritas
+    _checkIfLiked(favorites);  // Verifica si la obra está "likeada"
     widget.appFacade.fetchArtworkAndRelatedEntities(widget.id); // Vuelve a cargar la obra de arte
   }
 
@@ -66,8 +66,17 @@ class _ArtworkViewState extends State<ArtworkView> {
 
   @override
   void dispose() {
-    flutterTts.stop(); // Asegúrate de detener cualquier narración en progreso al salir
+    // Desregistrar la vista para detener las notificaciones de rutas
+    routeObserver.unsubscribe(this); // Ajustar con `RouteObserver`
+    flutterTts.stop();  // Asegúrate de detener cualquier narración en progreso
     super.dispose();
+  }
+
+  // Método para actualizar la obra de arte cuando regresas de otra vista
+  @override
+  void didPopNext() {
+    _initializeArtwork();  // Vuelve a cargar los datos de la obra de arte
+    super.didPopNext();
   }
 
   // Método para manejar la navegación
@@ -138,22 +147,20 @@ class _ArtworkViewState extends State<ArtworkView> {
     }
   }
 
-  // Método para iniciar la narración de TTS
   Future<void> _startTTS(String text) async {
     if (_isPlaying) {
-      await flutterTts.pause(); // Pausar si ya está reproduciendo
+      await flutterTts.pause();
       setState(() {
         _isPlaying = false;
       });
     } else {
-      await flutterTts.speak(text); // Iniciar la narración
+      await flutterTts.speak(text);
       setState(() {
         _isPlaying = true;
       });
     }
   }
 
-  // Método para detener la narración de TTS
   Future<void> _stopTTS() async {
     await flutterTts.stop();
     setState(() {
@@ -222,7 +229,7 @@ class _ArtworkViewState extends State<ArtworkView> {
                                   child: Icon(Icons.star, color: Colors.white),
                                 ),
                               ),
-                              onPressed: _onLikePressed, // Alternar estado "me gusta"
+                              onPressed: _onLikePressed,
                             ),
                           ],
                         ),
@@ -269,8 +276,8 @@ class _ArtworkViewState extends State<ArtworkView> {
                                   arguments: {'artist': artist},
                                 );
                                 if (_artworkId != null) {
-                                  final favorites = await widget.appFacade.fetchFavorites();  //Trae las obras
-                                  _checkIfLiked(favorites); // Verifica si la obra está likeada
+                                  final favorites = await widget.appFacade.fetchFavorites();
+                                  _checkIfLiked(favorites);
                                   widget.appFacade.fetchArtworkAndRelatedEntities(_artworkId!);
                                 }
                               } else {
