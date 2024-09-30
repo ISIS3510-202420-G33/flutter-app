@@ -1,6 +1,5 @@
 import 'dart:convert';
 import '../entities/artist.dart';
-import '../entities/artwork.dart';
 import '../model/api_adapter.dart';
 
 class ArtistService {
@@ -15,7 +14,7 @@ class ArtistService {
   final ApiAdapter apiAdapter = ApiAdapter.instance;
 
   Future<Artist> fetchArtistById(int id) async {
-    final response = await apiAdapter.get('/artist/$id');
+    final response = await apiAdapter.get('/artists/$id');
     if (response.statusCode == 200) {
       final List<dynamic> jsonResponse = jsonDecode(response.body);
       return Artist.fromJson(jsonResponse[0]);

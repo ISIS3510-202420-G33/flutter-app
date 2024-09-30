@@ -32,13 +32,19 @@ class _HomeViewState extends State<HomeView> {
           context,
           Routes.camera,
         ).then((_) {
-          // When returning to HomeView, reset the selected index to 0
           setState(() {
             _selectedIndex = 0;
           });
         });
       } else if (index == 2) {
-        // Navigate to Trending page (replace with real view if available)
+        Navigator.pushNamed(
+          context,
+          Routes.trending,
+        ).then((_) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        });
       }
     });
   }

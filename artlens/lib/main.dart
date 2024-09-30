@@ -6,18 +6,20 @@ import 'package:artlens/view_model/facade.dart';
 import 'package:artlens/view_model/artwork_cubit.dart';
 import 'package:artlens/view_model/artist_cubit.dart';
 import 'package:artlens/view_model/museum_cubit.dart';
-import 'package:artlens/view_model/auth_cubit.dart'; // Import AuthCubit
-import 'package:artlens/view_model/favorites_cubit.dart'; // Import FavoritesCubit
+import 'package:artlens/view_model/auth_cubit.dart';
+import 'package:artlens/view_model/favorites_cubit.dart';
+import 'package:artlens/view_model/analytic_engine_cubit.dart';
 import 'package:artlens/model/artwork_service.dart';
+import 'package:artlens/model/analytic_engine_service.dart';
 import 'package:artlens/model/artist_service.dart';
 import 'package:artlens/model/museum_service.dart';
-import 'package:artlens/model/user_service.dart'; // Import UserService
-import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
+import 'package:artlens/model/user_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensures Flutter is properly initialized before async code
+  WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -29,16 +31,18 @@ void main() async {
   final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService());
   final artistCubit = ArtistCubit(ArtistService());
   final museumCubit = MuseumCubit(MuseumService());
-  final authCubit = AuthCubit(); // Instanciar AuthCubit
-  final userService = UserService(); // Instanciar UserService
-  final favoritesCubit = FavoritesCubit(userService); // Pasar el UserService a FavoritesCubit
+  final authCubit = AuthCubit();
+  final userService = UserService();
+  final favoritesCubit = FavoritesCubit(userService);
+  final analyticEngineCubit = AnalyticEngineCubit(AnalyticEngineService());
   final appFacade = AppFacade(
     artworkCubit: artworkCubit,
     artistCubit: artistCubit,
     museumCubit: museumCubit,
     authCubit: authCubit,
     userService: userService,
-    favoritesCubit: favoritesCubit, // Asegurarse de agregar FavoritesCubit
+    favoritesCubit: favoritesCubit,
+    analyticEngineCubit: analyticEngineCubit
   );
 
   // Load saved session, if any
@@ -52,7 +56,8 @@ void main() async {
         BlocProvider(create: (_) => artistCubit),
         BlocProvider(create: (_) => museumCubit),
         BlocProvider(create: (_) => authCubit),
-        BlocProvider(create: (_) => favoritesCubit), // Agregar FavoritesCubit al BlocProvider
+        BlocProvider(create: (_) => favoritesCubit),
+        BlocProvider(create: (_) => analyticEngineCubit)
       ],
       child: ArtLensApp(),
     ),
