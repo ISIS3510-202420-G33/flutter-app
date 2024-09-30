@@ -7,6 +7,8 @@ import '../view_model/artwork_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 import '../main.dart'; // Importa el archivo donde está definido `routeObserver`
+import 'package:intl/intl.dart';
+
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -51,14 +53,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     _initializeArtwork();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Registrar la vista para recibir notificaciones de rutas
-    routeObserver.subscribe(this, ModalRoute.of(context)!);  // Ajustar con `RouteObserver`
-    _initializeArtwork();
-  }
-
   Future<void> _initializeArtwork() async {
     final favorites = await widget.appFacade.fetchFavorites();  // Trae las obras favoritas
     _checkIfLiked(favorites);  // Verifica si la obra está "likeada"
@@ -99,7 +93,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     });
   }
 
-
   Future<void> _onLikePressed() async {
     try {
       if (_isLiked) {
@@ -108,7 +101,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
           _isLiked = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Like eliminado')),
+          SnackBar(content: Text('Unliked')),
         );
       } else {
         await widget.appFacade.addFavorite(_artworkId!);
@@ -116,7 +109,10 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
           _isLiked = true;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Like añadido')),
+          SnackBar(
+            content: Text('Like added'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+          ),
         );
       }
     } catch (e) {
@@ -126,18 +122,28 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     }
   }
 
-  void _toggleForum() {
+  void _toggleForum() async {
     setState(() {
       _isForumOpen = !_isForumOpen;
     });
+    // Si el foro se abrió, cargar los comentarios
+    if (_isForumOpen) {
+      await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
+    }
   }
 
   // Método para enviar un comentario
-  void _submitComment() {
+  Future<void> _submitComment() async {
     if (_commentController.text.isNotEmpty) {
+      String content = _commentController.text;
+      String date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      await widget.appFacade.postComment(content, date, _artworkId!);
       setState(() {
         _commentController.clear();
       });
+
+      // Recargar los comentarios después de publicar uno nuevo
+      await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
     }
   }
 
@@ -160,6 +166,11 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     setState(() {
       _isPlaying = false;
     });
+  }
+
+  // Método para obtener el nombre de usuario por ID
+  Future<String?> _getUsername(int userId) async {
+    return await widget.appFacade.getUsername(userId);
   }
 
   @override
@@ -190,7 +201,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Renderizado del título y botón "me gusta"
                       Padding(
                         padding: const EdgeInsets.only(top: 32.0, left: 80.0),
                         child: Row(
@@ -225,8 +235,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Imagen de la obra de arte
                       Center(
                         child: Container(
                           constraints: BoxConstraints(maxWidth: 280, maxHeight: 350),
@@ -237,8 +245,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Descripción básica de la obra de arte
                       Padding(
                         padding: const EdgeInsets.only(left: 32.0, top: 16.0),
                         child: Text(
@@ -250,8 +256,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Botón para ver detalles del artista
                       Padding(
                         padding: const EdgeInsets.only(left: 28.0),
                         child: SizedBox(
@@ -290,8 +294,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Botón de reproducción de audio (Text-to-Speech)
                       Row(
                         children: [
                           IconButton(
@@ -325,8 +327,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                         ],
                       ),
                       const SizedBox(height: 16),
-
-                      // Descripción extendida
                       Padding(
                         padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
                         child: Text(
@@ -334,8 +334,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                           style: theme.textTheme.bodyMedium,
                         ),
                       ),
-
-                      // Botón para alternar la vista del foro
                       Padding(
                         padding: const EdgeInsets.only(left: 28.0, bottom: 14),
                         child: SizedBox(
@@ -356,8 +354,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                           ),
                         ),
                       ),
-
-                      // Sección del foro visible solo cuando el foro está abierto
                       if (_isForumOpen) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -394,15 +390,31 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                 ),
                               ),
                               const SizedBox(height: 16),
-
-                              // Renderizado de comentarios desde el estado cargado
                               ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: state.comments?.length ?? 0,
                                 itemBuilder: (context, index) {
-                                  return ListTile(
-                                    title: Text(state.comments![index].content),
+                                  final comment = state.comments![index];
+                                  return FutureBuilder<String?>(
+                                    future: _getUsername(comment.user),
+                                    builder: (context, snapshot) {
+                                      final username = snapshot.data ?? 'Unknown User';
+                                      final usernameColor = theme.colorScheme.secondary;
+                                      return ListTile(
+                                        title: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              username,
+                                              style: TextStyle(color: usernameColor, fontWeight: FontWeight.bold),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(comment.content),
+                                          ],
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
