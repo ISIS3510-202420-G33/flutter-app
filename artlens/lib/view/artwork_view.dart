@@ -6,6 +6,7 @@ import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
+import 'package:intl/intl.dart';
 
 
 class NoGlowScrollBehavior extends ScrollBehavior {
@@ -52,21 +53,17 @@ class _ArtworkViewState extends State<ArtworkView> {
     _initializeArtwork();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _initializeArtwork(); // Vuelve a cargar los datos de la obra de arte
-  }
-
   Future<void> _initializeArtwork() async {
     final favorites = await widget.appFacade.fetchFavorites();  //Trae las obras
     _checkIfLiked(favorites); // Verifica si la obra está likeada
     widget.appFacade.fetchArtworkAndRelatedEntities(widget.id); // Vuelve a cargar la obra de arte
   }
+
   void _checkIfLiked(favorites) {
     _isLiked = favorites.any((artwork) => artwork.id == _artworkId);
     setState(() {});
   }
+
   @override
   void dispose() {
     flutterTts.stop(); // Asegúrate de detener cualquier narración en progreso al salir
@@ -87,7 +84,6 @@ class _ArtworkViewState extends State<ArtworkView> {
     });
   }
 
-
   Future<void> _onLikePressed() async {
     try {
       if (_isLiked) {
@@ -96,7 +92,7 @@ class _ArtworkViewState extends State<ArtworkView> {
           _isLiked = false;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Like eliminado')),
+          SnackBar(content: Text('Unliked')),
         );
       } else {
         await widget.appFacade.addFavorite(_artworkId!);
@@ -104,31 +100,41 @@ class _ArtworkViewState extends State<ArtworkView> {
           _isLiked = true;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Like añadido')),
+          SnackBar(
+            content: Text('Like added'),
+            backgroundColor: Theme.of(context).colorScheme.secondary,
+          ),
         );
       }
     } catch (e) {
-      // Manejo de errores
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al actualizar el like')),
       );
     }
   }
 
-
-  void _toggleForum() {
+  void _toggleForum() async {
     setState(() {
       _isForumOpen = !_isForumOpen;
     });
+    // Si el foro se abrió, cargar los comentarios
+    if (_isForumOpen) {
+      await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
+    }
   }
 
   // Método para enviar un comentario
-  void _submitComment() {
+  Future<void> _submitComment() async {
     if (_commentController.text.isNotEmpty) {
+      String content = _commentController.text;
+      String date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      await widget.appFacade.postComment(content, date, _artworkId!);
       setState(() {
-        // Lógica para agregar comentario (puedes añadir lógica adicional para mandar el comentario a un servidor)
         _commentController.clear();
       });
+
+      // Recargar los comentarios después de publicar uno nuevo
+      await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
     }
   }
 
@@ -155,6 +161,11 @@ class _ArtworkViewState extends State<ArtworkView> {
     });
   }
 
+  // Método para obtener el nombre de usuario por ID
+  Future<String?> _getUsername(int userId) async {
+    return await widget.appFacade.getUsername(userId);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -171,7 +182,6 @@ class _ArtworkViewState extends State<ArtworkView> {
             final artist = state.artist;
             final museum = state.museum;
 
-
             return ScrollConfiguration(
               behavior: NoGlowScrollBehavior(),
               child: RawScrollbar(
@@ -184,7 +194,6 @@ class _ArtworkViewState extends State<ArtworkView> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Renderizado del título y botón "me gusta"
                       Padding(
                         padding: const EdgeInsets.only(top: 32.0, left: 80.0),
                         child: Row(
@@ -219,8 +228,6 @@ class _ArtworkViewState extends State<ArtworkView> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Imagen de la obra de arte
                       Center(
                         child: Container(
                           constraints: BoxConstraints(maxWidth: 280, maxHeight: 350),
@@ -231,8 +238,6 @@ class _ArtworkViewState extends State<ArtworkView> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Descripción básica de la obra de arte
                       Padding(
                         padding: const EdgeInsets.only(left: 32.0, top: 16.0),
                         child: Text(
@@ -244,8 +249,6 @@ class _ArtworkViewState extends State<ArtworkView> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Botón para ver detalles del artista
                       Padding(
                         padding: const EdgeInsets.only(left: 28.0),
                         child: SizedBox(
@@ -270,7 +273,6 @@ class _ArtworkViewState extends State<ArtworkView> {
                                   _checkIfLiked(favorites); // Verifica si la obra está likeada
                                   widget.appFacade.fetchArtworkAndRelatedEntities(_artworkId!);
                                 }
-
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Artist details are not available')),
@@ -285,13 +287,11 @@ class _ArtworkViewState extends State<ArtworkView> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Botón de reproducción de audio (Text-to-Speech)
                       Row(
                         children: [
                           IconButton(
                             icon: Icon(
-                              _isPlaying ? Icons.pause : Icons.play_arrow, // Cambia el icono según el estado
+                              _isPlaying ? Icons.pause : Icons.play_arrow,
                               color: Colors.black,
                               size: 40,
                             ),
@@ -320,8 +320,6 @@ class _ArtworkViewState extends State<ArtworkView> {
                         ],
                       ),
                       const SizedBox(height: 16),
-
-                      // Descripción extendida
                       Padding(
                         padding: const EdgeInsets.only(left: 32.0, right: 32.0, bottom: 32.0),
                         child: Text(
@@ -329,8 +327,6 @@ class _ArtworkViewState extends State<ArtworkView> {
                           style: theme.textTheme.bodyMedium,
                         ),
                       ),
-
-                      // Botón para alternar la vista del foro
                       Padding(
                         padding: const EdgeInsets.only(left: 28.0, bottom: 14),
                         child: SizedBox(
@@ -351,8 +347,6 @@ class _ArtworkViewState extends State<ArtworkView> {
                           ),
                         ),
                       ),
-
-                      // Sección del foro visible solo cuando el foro está abierto
                       if (_isForumOpen) ...[
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -389,15 +383,31 @@ class _ArtworkViewState extends State<ArtworkView> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-
-                              // Renderizado de comentarios desde el estado cargado
                               ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: state.comments?.length ?? 0,
                                 itemBuilder: (context, index) {
-                                  return ListTile(
-                                    title: Text(state.comments![index].content),
+                                  final comment = state.comments![index];
+                                  return FutureBuilder<String?>(
+                                    future: _getUsername(comment.user),
+                                    builder: (context, snapshot) {
+                                      final username = snapshot.data ?? 'Unknown User';
+                                      final usernameColor = theme.colorScheme.secondary;
+                                      return ListTile(
+                                        title: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              username,
+                                              style: TextStyle(color: usernameColor, fontWeight: FontWeight.bold),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(comment.content),
+                                          ],
+                                        ),
+                                      );
+                                    },
                                   );
                                 },
                               ),
