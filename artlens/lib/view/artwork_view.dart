@@ -64,6 +64,8 @@ class _ArtworkViewState extends State<ArtworkView> {
         Navigator.pushNamedAndRemoveUntil(context, Routes.home, (route) => false);
       } else if (index == 1) {
         Navigator.pushNamed(context, Routes.camera);
+      } else if (index == 2) {
+        Navigator.pushNamed(context, Routes.trending);
       }
     });
   }
@@ -123,7 +125,6 @@ class _ArtworkViewState extends State<ArtworkView> {
         bloc: widget.appFacade.artworkCubit,
         builder: (context, state) {
           if (state is ArtworkLoading) {
-            // Muestra un spinner de carga mientras los datos se cargan
             return Center(child: CircularProgressIndicator());
           } else if (state is ArtworkLoaded) {
             final artwork = state.artwork;
