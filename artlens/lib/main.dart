@@ -8,11 +8,13 @@ import 'package:artlens/view_model/artist_cubit.dart';
 import 'package:artlens/view_model/museum_cubit.dart';
 import 'package:artlens/view_model/auth_cubit.dart';
 import 'package:artlens/view_model/favorites_cubit.dart';
+import 'package:artlens/view_model/comments_cubit.dart';
 import 'package:artlens/view_model/analytic_engine_cubit.dart';
 import 'package:artlens/model/artwork_service.dart';
 import 'package:artlens/model/analytic_engine_service.dart';
 import 'package:artlens/model/artist_service.dart';
 import 'package:artlens/model/museum_service.dart';
+import 'package:artlens/model/comments_service.dart';
 import 'package:artlens/model/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -31,6 +33,7 @@ void main() async {
   final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService());
   final artistCubit = ArtistCubit(ArtistService());
   final museumCubit = MuseumCubit(MuseumService());
+  final commentsCubit = CommentsCubit(CommentsService());
   final authCubit = AuthCubit();
   final userService = UserService();
   final favoritesCubit = FavoritesCubit(userService);
@@ -41,8 +44,9 @@ void main() async {
     museumCubit: museumCubit,
     authCubit: authCubit,
     userService: userService,
+    commentsCubit: commentsCubit,
     favoritesCubit: favoritesCubit,
-    analyticEngineCubit: analyticEngineCubit
+    analyticEngineCubit: analyticEngineCubit,
   );
   runApp(ArtLensApp(appFacade: appFacade));
   // Load saved session, if any
@@ -59,7 +63,7 @@ void main() async {
         BlocProvider(create: (_) => favoritesCubit),
         BlocProvider(create: (_) => analyticEngineCubit)
       ],
-      child: ArtLensApp(appFacade: AppFacade(artworkCubit: artworkCubit, artistCubit: artistCubit, museumCubit: museumCubit, authCubit: authCubit, favoritesCubit: favoritesCubit, userService: userService),),
+      child: ArtLensApp(appFacade: AppFacade(artworkCubit: artworkCubit, artistCubit: artistCubit, museumCubit: museumCubit, authCubit: authCubit, favoritesCubit: favoritesCubit, commentsCubit: commentsCubit, userService: userService, analyticEngineCubit: analyticEngineCubit),),
     ),
   );
 }
@@ -94,16 +98,16 @@ class ArtLensApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
         ),
       ),
-        initialRoute: Routes.home,
+        initialRoute: Routes.artwork,
         onGenerateRoute: (settings) {
      //DESCOMENTAR ESTA SECCION PARA PODER PROBAR DESDE EL EMULADOR SIN LEER CODIGO QR
-        //if (settings.name == Routes.artwork) {
-        //  return Routes.generateRoute(RouteSettings(
-        //    name: Routes.artwork,
-        //    arguments: {'id': 1},
-        //  ), appFacade);
-        //}
-        return Routes.generateRoute(settings, appFacade);
+        if (settings.name == Routes.artwork) {
+          return Routes.generateRoute(RouteSettings(
+            name: Routes.artwork,
+            arguments: {'id': 1},
+          ), appFacade);
+        }
+        //return Routes.generateRoute(settings, appFacade);
          }
     );
   }
