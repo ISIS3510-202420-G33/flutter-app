@@ -15,7 +15,7 @@ class ArtworkService {
   final ApiAdapter apiAdapter = ApiAdapter.instance;
 
   Future<Artwork> fetchArtworkById(int id) async {
-    final response = await apiAdapter.get('/artwork/$id');
+    final response = await apiAdapter.get('/artworks/$id');
     if (response.statusCode == 200) {
       final List<dynamic> jsonResponse = jsonDecode(response.body);
       return Artwork.fromJson(jsonResponse[0]);
@@ -25,7 +25,7 @@ class ArtworkService {
   }
 
   Future<List<Comment>> fetchCommentsByArtworkId(int id) async {
-    final response = await apiAdapter.get('/artwork/comments/$id');
+    final response = await apiAdapter.get('/artworks/comments/$id');
     if (response.statusCode == 200) {
       List<dynamic> jsonData = jsonDecode(response.body);
       return jsonData.map((data) => Comment.fromJson(data)).toList();
@@ -35,7 +35,7 @@ class ArtworkService {
   }
 
   Future<List<Artwork>> fetchArtworksByArtistId(int id) async {
-    final response = await apiAdapter.get('/artwork/artist/$id');
+    final response = await apiAdapter.get('/artworks/artist/$id');
     if (response.statusCode == 200) {
       List<dynamic> jsonData = jsonDecode(response.body);
       return jsonData.map((data) => Artwork.fromJson(data)).toList();

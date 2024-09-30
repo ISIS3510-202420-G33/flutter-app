@@ -4,7 +4,8 @@ import '../view_model/artwork_cubit.dart';
 import '../view_model/artist_cubit.dart';
 import '../view_model/museum_cubit.dart';
 import '../view_model/auth_cubit.dart';
-import '../view_model/favorites_cubit.dart'; // Nuevo cubit de favoritos
+import '../view_model/favorites_cubit.dart';
+import '../view_model/analytic_engine_cubit.dart';
 import '../model/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -13,16 +14,18 @@ class AppFacade {
   final ArtistCubit artistCubit;
   final MuseumCubit museumCubit;
   final AuthCubit authCubit;
-  final FavoritesCubit favoritesCubit; // Añadimos el cubit de favoritos
+  final FavoritesCubit favoritesCubit;
   final UserService userService;
+  final AnalyticEngineCubit analyticEngineCubit;
 
   AppFacade({
     required this.artworkCubit,
     required this.artistCubit,
     required this.museumCubit,
     required this.authCubit,
-    required this.favoritesCubit, // Añadido aquí
+    required this.favoritesCubit,
     required this.userService,
+    required this.analyticEngineCubit
   });
 
   // Authentication
@@ -114,6 +117,10 @@ class AppFacade {
   // Museum management
   void fetchMuseumById(int id) {
     museumCubit.fetchMuseumById(id);
+  }
+
+  void fetchRecommendationsByUserId(int id) {
+    analyticEngineCubit.fetchRecommendationsByUserId(id);
   }
 
   // Favorites management (nuevo)

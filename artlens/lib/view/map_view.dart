@@ -164,18 +164,11 @@ class _MapViewState extends State<MapView> {
     setState(() {
       _selectedIndex = index;
       if (index == 0) {
-        Navigator.pushNamedAndRemoveUntil(
-          context,
-          Routes.home,
-              (route) => false,
-        );
+        Navigator.pushNamedAndRemoveUntil(context, Routes.home, (route) => false);
       } else if (index == 1) {
-        Navigator.pushNamed(
-          context,
-          Routes.camera,
-        );
+        Navigator.pushNamed(context, Routes.camera);
       } else if (index == 2) {
-        // Navigate to Trending page (replace with real view if available)
+        Navigator.pushNamed(context, Routes.trending);
       }
     });
   }

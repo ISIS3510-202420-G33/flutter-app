@@ -46,6 +46,8 @@ class _ArtistViewState extends State<ArtistView> {
         Navigator.pushNamedAndRemoveUntil(context, Routes.home, (route) => false);
       } else if (index == 1) {
         Navigator.pushNamed(context, Routes.camera);
+      } else if (index == 2) {
+        Navigator.pushNamed(context, Routes.trending);
       }
     });
   }
