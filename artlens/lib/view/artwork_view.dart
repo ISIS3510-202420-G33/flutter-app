@@ -6,7 +6,7 @@ import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
-
+import '../main.dart'; // Importa el archivo donde está definido `routeObserver`
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -29,16 +29,14 @@ class ArtworkView extends StatefulWidget {
   _ArtworkViewState createState() => _ArtworkViewState();
 }
 
-class _ArtworkViewState extends State<ArtworkView> {
+class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   int? _artworkId;
   int _selectedIndex = 1;
   bool _isLiked = false;
   bool _isForumOpen = false;
   bool _isPlaying = false; // Controlar si el TTS está reproduciendo
   final TextEditingController _commentController = TextEditingController();
-
-  // Instancia de FlutterTTS
-  final FlutterTts flutterTts = FlutterTts();
+  final FlutterTts flutterTts = FlutterTts(); // Instancia de FlutterTTS
 
   @override
   void initState() {
@@ -47,30 +45,44 @@ class _ArtworkViewState extends State<ArtworkView> {
     widget.appFacade.fetchArtworkAndRelatedEntities(widget.id);
 
     // Configura los parámetros iniciales de TTS
-    flutterTts.setLanguage('en-US'); // Cambia el idioma según tu preferencia
-    flutterTts.setSpeechRate(0.5); // Velocidad de la narración
+    flutterTts.setLanguage('en-US');
+    flutterTts.setSpeechRate(0.5);
+
     _initializeArtwork();
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _initializeArtwork(); // Vuelve a cargar los datos de la obra de arte
+    // Registrar la vista para recibir notificaciones de rutas
+    routeObserver.subscribe(this, ModalRoute.of(context)!);  // Ajustar con `RouteObserver`
+    _initializeArtwork();
   }
 
   Future<void> _initializeArtwork() async {
-    final favorites = await widget.appFacade.fetchFavorites();  //Trae las obras
-    _checkIfLiked(favorites); // Verifica si la obra está likeada
+    final favorites = await widget.appFacade.fetchFavorites();  // Trae las obras favoritas
+    _checkIfLiked(favorites);  // Verifica si la obra está "likeada"
     widget.appFacade.fetchArtworkAndRelatedEntities(widget.id); // Vuelve a cargar la obra de arte
   }
+
   void _checkIfLiked(favorites) {
     _isLiked = favorites.any((artwork) => artwork.id == _artworkId);
     setState(() {});
   }
+
   @override
   void dispose() {
-    flutterTts.stop(); // Asegúrate de detener cualquier narración en progreso al salir
+    // Desregistrar la vista para detener las notificaciones de rutas
+    routeObserver.unsubscribe(this); // Ajustar con `RouteObserver`
+    flutterTts.stop();  // Asegúrate de detener cualquier narración en progreso
     super.dispose();
+  }
+
+  // Método para actualizar la obra de arte cuando regresas de otra vista
+  @override
+  void didPopNext() {
+    _initializeArtwork();  // Vuelve a cargar los datos de la obra de arte
+    super.didPopNext();
   }
 
   // Método para manejar la navegación
@@ -108,13 +120,11 @@ class _ArtworkViewState extends State<ArtworkView> {
         );
       }
     } catch (e) {
-      // Manejo de errores
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error al actualizar el like')),
       );
     }
   }
-
 
   void _toggleForum() {
     setState(() {
@@ -126,28 +136,25 @@ class _ArtworkViewState extends State<ArtworkView> {
   void _submitComment() {
     if (_commentController.text.isNotEmpty) {
       setState(() {
-        // Lógica para agregar comentario (puedes añadir lógica adicional para mandar el comentario a un servidor)
         _commentController.clear();
       });
     }
   }
 
-  // Método para iniciar la narración de TTS
   Future<void> _startTTS(String text) async {
     if (_isPlaying) {
-      await flutterTts.pause(); // Pausar si ya está reproduciendo
+      await flutterTts.pause();
       setState(() {
         _isPlaying = false;
       });
     } else {
-      await flutterTts.speak(text); // Iniciar la narración
+      await flutterTts.speak(text);
       setState(() {
         _isPlaying = true;
       });
     }
   }
 
-  // Método para detener la narración de TTS
   Future<void> _stopTTS() async {
     await flutterTts.stop();
     setState(() {
@@ -170,7 +177,6 @@ class _ArtworkViewState extends State<ArtworkView> {
             final artwork = state.artwork;
             final artist = state.artist;
             final museum = state.museum;
-
 
             return ScrollConfiguration(
               behavior: NoGlowScrollBehavior(),
@@ -213,7 +219,7 @@ class _ArtworkViewState extends State<ArtworkView> {
                                   child: Icon(Icons.star, color: Colors.white),
                                 ),
                               ),
-                              onPressed: _onLikePressed, // Alternar estado "me gusta"
+                              onPressed: _onLikePressed,
                             ),
                           ],
                         ),
@@ -266,11 +272,10 @@ class _ArtworkViewState extends State<ArtworkView> {
                                   arguments: {'artist': artist},
                                 );
                                 if (_artworkId != null) {
-                                  final favorites = await widget.appFacade.fetchFavorites();  //Trae las obras
-                                  _checkIfLiked(favorites); // Verifica si la obra está likeada
+                                  final favorites = await widget.appFacade.fetchFavorites();
+                                  _checkIfLiked(favorites);
                                   widget.appFacade.fetchArtworkAndRelatedEntities(_artworkId!);
                                 }
-
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Artist details are not available')),
@@ -291,7 +296,7 @@ class _ArtworkViewState extends State<ArtworkView> {
                         children: [
                           IconButton(
                             icon: Icon(
-                              _isPlaying ? Icons.pause : Icons.play_arrow, // Cambia el icono según el estado
+                              _isPlaying ? Icons.pause : Icons.play_arrow,
                               color: Colors.black,
                               size: 40,
                             ),

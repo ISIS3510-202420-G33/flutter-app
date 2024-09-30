@@ -18,6 +18,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
+/// Inicializar un RouteObserver para seguir las rutas
+final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -94,6 +97,7 @@ class ArtLensApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
         ),
       ),
+<<<<<<< Updated upstream
         initialRoute: Routes.home,
         onGenerateRoute: (settings) {
      //DESCOMENTAR ESTA SECCION PARA PODER PROBAR DESDE EL EMULADOR SIN LEER CODIGO QR
@@ -103,6 +107,18 @@ class ArtLensApp extends StatelessWidget {
         //    arguments: {'id': 1},
         //  ), appFacade);
         //}
+=======
+      initialRoute: Routes.home,
+      navigatorObservers: [routeObserver], // Agregar RouteObserver aquí
+      onGenerateRoute: (settings) {
+        // DESCOMENTAR ESTA SECCION PARA PODER PROBAR DESDE EL EMULADOR SIN LEER CODIGO QR
+        // if (settings.name == Routes.artwork) {
+        //   return Routes.generateRoute(RouteSettings(
+        //     name: Routes.artwork,
+        //     arguments: {'id': 1},
+        //   ), appFacade);
+        // }
+>>>>>>> Stashed changes
         return Routes.generateRoute(settings, appFacade);
          }
     );
