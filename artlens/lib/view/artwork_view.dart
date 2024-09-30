@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_tts/flutter_tts.dart'; // Importa Flutter TTS
+import 'package:flutter_tts/flutter_tts.dart';
 import '../routes.dart';
 import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
+
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -48,8 +49,24 @@ class _ArtworkViewState extends State<ArtworkView> {
     // Configura los parámetros iniciales de TTS
     flutterTts.setLanguage('en-US'); // Cambia el idioma según tu preferencia
     flutterTts.setSpeechRate(0.5); // Velocidad de la narración
+    _initializeArtwork();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _initializeArtwork(); // Vuelve a cargar los datos de la obra de arte
+  }
+
+  Future<void> _initializeArtwork() async {
+    final favorites = await widget.appFacade.fetchFavorites();  //Trae las obras
+    _checkIfLiked(favorites); // Verifica si la obra está likeada
+    widget.appFacade.fetchArtworkAndRelatedEntities(widget.id); // Vuelve a cargar la obra de arte
+  }
+  void _checkIfLiked(favorites) {
+    _isLiked = favorites.any((artwork) => artwork.id == _artworkId);
+    setState(() {});
+  }
   @override
   void dispose() {
     flutterTts.stop(); // Asegúrate de detener cualquier narración en progreso al salir
@@ -70,11 +87,34 @@ class _ArtworkViewState extends State<ArtworkView> {
     });
   }
 
-  void _onLikePressed() {
-    setState(() {
-      _isLiked = !_isLiked;
-    });
+
+  Future<void> _onLikePressed() async {
+    try {
+      if (_isLiked) {
+        await widget.appFacade.removeFavorite(_artworkId!);
+        setState(() {
+          _isLiked = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Like eliminado')),
+        );
+      } else {
+        await widget.appFacade.addFavorite(_artworkId!);
+        setState(() {
+          _isLiked = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Like añadido')),
+        );
+      }
+    } catch (e) {
+      // Manejo de errores
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al actualizar el like')),
+      );
+    }
   }
+
 
   void _toggleForum() {
     setState(() {
@@ -120,7 +160,7 @@ class _ArtworkViewState extends State<ArtworkView> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: CustomAppBar(title: "HOME", showProfileIcon: true, showBackArrow: true),
+      appBar: CustomAppBar(title: "ARTWORK", showProfileIcon: true, showBackArrow: true),
       body: BlocBuilder<ArtworkCubit, ArtworkState>(
         bloc: widget.appFacade.artworkCubit,
         builder: (context, state) {
@@ -130,6 +170,7 @@ class _ArtworkViewState extends State<ArtworkView> {
             final artwork = state.artwork;
             final artist = state.artist;
             final museum = state.museum;
+
 
             return ScrollConfiguration(
               behavior: NoGlowScrollBehavior(),
@@ -224,8 +265,9 @@ class _ArtworkViewState extends State<ArtworkView> {
                                   Routes.artist,
                                   arguments: {'artist': artist},
                                 );
-
                                 if (_artworkId != null) {
+                                  final favorites = await widget.appFacade.fetchFavorites();  //Trae las obras
+                                  _checkIfLiked(favorites); // Verifica si la obra está likeada
                                   widget.appFacade.fetchArtworkAndRelatedEntities(_artworkId!);
                                 }
 

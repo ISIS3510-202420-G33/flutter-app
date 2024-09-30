@@ -44,7 +44,7 @@ void main() async {
     favoritesCubit: favoritesCubit,
     analyticEngineCubit: analyticEngineCubit
   );
-
+  runApp(ArtLensApp(appFacade: appFacade));
   // Load saved session, if any
   await appFacade.loadSession();
 
@@ -59,12 +59,15 @@ void main() async {
         BlocProvider(create: (_) => favoritesCubit),
         BlocProvider(create: (_) => analyticEngineCubit)
       ],
-      child: ArtLensApp(),
+      child: ArtLensApp(appFacade: AppFacade(artworkCubit: artworkCubit, artistCubit: artistCubit, museumCubit: museumCubit, authCubit: authCubit, favoritesCubit: favoritesCubit, userService: userService),),
     ),
   );
 }
 
 class ArtLensApp extends StatelessWidget {
+  final AppFacade appFacade;
+  const ArtLensApp({Key? key, required this.appFacade}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -91,10 +94,17 @@ class ArtLensApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
         ),
       ),
-      initialRoute: Routes.home,
-      onGenerateRoute: (settings) {
-        return Routes.generateRoute(settings, context.read<AppFacade>());
-      },
+        initialRoute: Routes.home,
+        onGenerateRoute: (settings) {
+     //DESCOMENTAR ESTA SECCION PARA PODER PROBAR DESDE EL EMULADOR SIN LEER CODIGO QR
+        //if (settings.name == Routes.artwork) {
+        //  return Routes.generateRoute(RouteSettings(
+        //    name: Routes.artwork,
+        //    arguments: {'id': 1},
+        //  ), appFacade);
+        //}
+        return Routes.generateRoute(settings, appFacade);
+         }
     );
   }
 }

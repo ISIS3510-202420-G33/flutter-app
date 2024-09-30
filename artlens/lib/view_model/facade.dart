@@ -1,3 +1,4 @@
+import '../entities/artwork.dart';
 import '../entities/user.dart';
 import '../view_model/artwork_cubit.dart';
 import '../view_model/artist_cubit.dart';
@@ -125,10 +126,19 @@ class AppFacade {
   // Favorites management (nuevo)
 
   // Obtener los favoritos del usuario
-  Future<void> fetchFavorites() async {
+  Future<List<Artwork>> fetchFavorites() async {
     final userId = await _getUserId();
     if (userId != null) {
-      favoritesCubit.fetchFavorites(userId);
+      final favorites = favoritesCubit.fetchFavorites(userId);
+      return favorites;
+    }
+    return [];
+  }
+
+  Future<void> addFavorite(int artworkId) async {
+    final userId = await _getUserId();
+    if (userId != null) {
+      await favoritesCubit.addFavorite(userId, artworkId);
     }
   }
 

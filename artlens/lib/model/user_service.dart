@@ -63,5 +63,17 @@ class UserService {
       throw Exception('Error deleting favorite');
     }
   }
-
+  // Añadir un favorito y retornar la obra likeada
+  Future<Artwork> addFavorite(int userId, int artworkId) async {
+    final response = await apiAdapter.post('/user/like', {
+      'userId': userId,
+      'artworkId': artworkId,
+    });
+    if (response.statusCode == 200) {
+      final jsonResponse = jsonDecode(response.body);
+      return Artwork.fromJson(jsonResponse);
+    } else {
+      throw Exception('Error adding favorite');
+    }
+  }
 }
