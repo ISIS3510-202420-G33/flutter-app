@@ -20,13 +20,15 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   FavoritesCubit(this.userService) : super(FavoritesState(favorites: []));
 
   // Método para obtener los favoritos del usuario
-  Future<void> fetchFavorites(int userId) async {
+  Future<List<Artwork>> fetchFavorites(int userId) async {
     emit(FavoritesState(favorites: [], isLoading: true));
     try {
       final favorites = await userService.getFavorites(userId);
       emit(FavoritesState(favorites: favorites));
+      return favorites;
     } catch (e) {
       emit(FavoritesState(favorites: [], error: 'Error fetching favorites'));
+      return [];
     }
   }
 
@@ -42,4 +44,17 @@ class FavoritesCubit extends Cubit<FavoritesState> {
       emit(FavoritesState(favorites: state.favorites, error: 'Error deleting favorite'));
     }
   }
+
+// Método para añadir un favorito
+  Future<void> addFavorite(int userId, int artworkId) async {
+    try {
+      final addedArtwork = await userService.addFavorite(userId, artworkId);
+      final updatedFavorites = List<Artwork>.from(state.favorites)
+        ..add(addedArtwork);
+      emit(FavoritesState(favorites: updatedFavorites));
+    } catch (e) {
+      emit(FavoritesState(favorites: state.favorites, error: 'Error adding favorite'));
+    }
+  }
+
 }
