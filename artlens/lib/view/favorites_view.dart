@@ -20,6 +20,7 @@ class FavoritesView extends StatefulWidget {
 }
 
 class _FavoritesViewState extends State<FavoritesView> {
+  int _selectedIndex = 2; // Controlar la selección de la barra de navegación
   int? userId;
   Map<int, bool> isPressed = {}; // Map para controlar qué íconos han sido presionados
 
@@ -39,6 +40,21 @@ class _FavoritesViewState extends State<FavoritesView> {
     if (userId != null) {
       // Obtén los favoritos del usuario
       context.read<FavoritesCubit>().fetchFavorites(userId!);
+    }
+  }
+
+  // Método para manejar la navegación de la barra inferior
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+
+    if (index == 0) {
+      Navigator.pushNamedAndRemoveUntil(context, Routes.home, (route) => false);
+    } else if (index == 1) {
+      Navigator.pushNamed(context, Routes.camera);
+    } else if (index == 2) {
+      Navigator.pushNamed(context, Routes.trending);
     }
   }
 
@@ -171,10 +187,8 @@ class _FavoritesViewState extends State<FavoritesView> {
         },
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: 2,
-        onItemTapped: (index) {
-          // Manejar la navegación cuando se toquen los elementos de la barra
-        },
+        selectedIndex: _selectedIndex, // Aquí manejamos el índice seleccionado, comenzando con 2 para favoritos
+        onItemTapped: _onItemTapped,
       ),
     );
   }

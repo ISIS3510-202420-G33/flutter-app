@@ -6,21 +6,25 @@ import '../view_model/museum_cubit.dart';
 import '../view_model/auth_cubit.dart';
 import '../view_model/favorites_cubit.dart';
 import '../view_model/analytic_engine_cubit.dart';
+import '../view_model/comments_cubit.dart';
 import '../model/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppFacade {
   final ArtworkCubit artworkCubit;
   final ArtistCubit artistCubit;
+  final CommentsCubit commentsCubit;
   final MuseumCubit museumCubit;
   final AuthCubit authCubit;
   final FavoritesCubit favoritesCubit;
   final UserService userService;
   final AnalyticEngineCubit analyticEngineCubit;
 
+
   AppFacade({
     required this.artworkCubit,
     required this.artistCubit,
+    required this.commentsCubit,
     required this.museumCubit,
     required this.authCubit,
     required this.favoritesCubit,
@@ -154,5 +158,27 @@ class AppFacade {
   Future<int?> _getUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getInt('userId');
+  }
+
+  // Obtener comentarios de una obra de arte
+  Future<void> fetchCommentsByArtworkId(int artworkId) async {
+    await commentsCubit.fetchCommentsByArtworkId(artworkId);
+  }
+
+  // Publicar un comentario en una obra de arte
+  Future<void> postComment(String content, String date, int artworkId) async {
+    final userId = await _getUserId();  // Obtén el ID del usuario autenticado
+    if (userId != null) {
+      await commentsCubit.postComment(content, date, artworkId, userId);
+    }
+  }
+
+  // Método para obtener el nombre de usuario por ID
+  Future<String?> getUsername(int userId) async {
+    await commentsCubit.fetchUsername(userId);
+    if (commentsCubit.state is CommentsLoaded) {
+      return (commentsCubit.state as CommentsLoaded).username;
+    }
+    return null;
   }
 }
