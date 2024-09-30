@@ -35,16 +35,17 @@ void main() async {
   final userService = UserService();
   final favoritesCubit = FavoritesCubit(userService);
   final analyticEngineCubit = AnalyticEngineCubit(AnalyticEngineService());
+
   final appFacade = AppFacade(
-    artworkCubit: artworkCubit,
-    artistCubit: artistCubit,
-    museumCubit: museumCubit,
-    authCubit: authCubit,
-    userService: userService,
-    favoritesCubit: favoritesCubit,
-    analyticEngineCubit: analyticEngineCubit
+      artworkCubit: artworkCubit,
+      artistCubit: artistCubit,
+      museumCubit: museumCubit,
+      authCubit: authCubit,
+      userService: userService,
+      favoritesCubit: favoritesCubit,
+      analyticEngineCubit: analyticEngineCubit
   );
-  runApp(ArtLensApp(appFacade: appFacade));
+
   // Load saved session, if any
   await appFacade.loadSession();
 
@@ -59,7 +60,7 @@ void main() async {
         BlocProvider(create: (_) => favoritesCubit),
         BlocProvider(create: (_) => analyticEngineCubit)
       ],
-      child: ArtLensApp(appFacade: AppFacade(artworkCubit: artworkCubit, artistCubit: artistCubit, museumCubit: museumCubit, authCubit: authCubit, favoritesCubit: favoritesCubit, userService: userService),),
+      child: ArtLensApp(appFacade: appFacade), // Solo una llamada a runApp
     ),
   );
 }
@@ -94,17 +95,17 @@ class ArtLensApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
         ),
       ),
-        initialRoute: Routes.home,
-        onGenerateRoute: (settings) {
-     //DESCOMENTAR ESTA SECCION PARA PODER PROBAR DESDE EL EMULADOR SIN LEER CODIGO QR
-        //if (settings.name == Routes.artwork) {
-        //  return Routes.generateRoute(RouteSettings(
-        //    name: Routes.artwork,
-        //    arguments: {'id': 1},
-        //  ), appFacade);
-        //}
+      initialRoute: Routes.home,
+      onGenerateRoute: (settings) {
+        // DESCOMENTAR ESTA SECCION PARA PODER PROBAR DESDE EL EMULADOR SIN LEER CODIGO QR
+        // if (settings.name == Routes.artwork) {
+        //   return Routes.generateRoute(RouteSettings(
+        //     name: Routes.artwork,
+        //     arguments: {'id': 1},
+        //   ), appFacade);
+        // }
         return Routes.generateRoute(settings, appFacade);
-         }
+      },
     );
   }
 }
