@@ -6,16 +6,10 @@ import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
-import '../main.dart'; // Importa el archivo donde está definido `routeObserver`
+import '../main.dart'; // Para usar el `RouteObserver`
 import 'package:intl/intl.dart';
 
-
-class NoGlowScrollBehavior extends ScrollBehavior {
-  @override
-  Widget buildViewportChrome(BuildContext context, Widget child, AxisDirection axisDirection) {
-    return child;
-  }
-}
+import 'artist_view.dart';
 
 class ArtworkView extends StatefulWidget {
   final int id;
@@ -37,6 +31,8 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   bool _isLiked = false;
   bool _isForumOpen = false;
   bool _isPlaying = false; // Controlar si el TTS está reproduciendo
+  bool _isLoading = true; // Controlar el estado de carga de la obra de arte
+  bool _isCommentsLoading = false; // Controlar el estado de carga de comentarios
   final TextEditingController _commentController = TextEditingController();
   final FlutterTts flutterTts = FlutterTts(); // Instancia de FlutterTTS
 
@@ -44,7 +40,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   void initState() {
     super.initState();
     _artworkId = widget.id;
-    widget.appFacade.fetchArtworkAndRelatedEntities(widget.id);
 
     // Configura los parámetros iniciales de TTS
     flutterTts.setLanguage('en-US');
@@ -53,10 +48,23 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     _initializeArtwork();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Registrar la vista para recibir notificaciones de rutas con RouteObserver
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
   Future<void> _initializeArtwork() async {
+    setState(() {
+      _isLoading = true;
+    });
     final favorites = await widget.appFacade.fetchFavorites();  // Trae las obras favoritas
     _checkIfLiked(favorites);  // Verifica si la obra está "likeada"
     widget.appFacade.fetchArtworkAndRelatedEntities(widget.id); // Vuelve a cargar la obra de arte
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   void _checkIfLiked(favorites) {
@@ -72,10 +80,9 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     super.dispose();
   }
 
-  // Método para actualizar la obra de arte cuando regresas de otra vista
   @override
   void didPopNext() {
-    _initializeArtwork();  // Vuelve a cargar los datos de la obra de arte
+    _initializeArtwork();  // Vuelve a cargar los datos de la obra de arte cuando se regresa
     super.didPopNext();
   }
 
@@ -128,24 +135,51 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     });
     // Si el foro se abrió, cargar los comentarios
     if (_isForumOpen) {
-      await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
+      await _loadComments();
     }
   }
 
-  // Método para enviar un comentario
   Future<void> _submitComment() async {
     if (_commentController.text.isNotEmpty) {
       String content = _commentController.text;
       String date = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      await widget.appFacade.postComment(content, date, _artworkId!);
-      setState(() {
-        _commentController.clear();
-      });
 
-      // Recargar los comentarios después de publicar uno nuevo
-      await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
+      // Postear el comentario
+      await widget.appFacade.postComment(content, date, _artworkId!);
+
+      // Limpiar el campo del comentario
+      _commentController.clear();
+
+      // Forzar la recarga completa de la vista
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ArtworkView(
+            id: _artworkId!,
+            appFacade: widget.appFacade,
+          ),
+        ),
+      );
     }
   }
+
+
+
+  Future<void> _loadComments() async {
+    setState(() {
+      _isCommentsLoading = true; // Mostrar el spinner de carga
+    });
+
+    // Cargar los comentarios
+    await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
+
+    // Detener el spinner y actualizar el estado
+    setState(() {
+      _isCommentsLoading = false;
+    });
+  }
+
+
 
   Future<void> _startTTS(String text) async {
     if (_isPlaying) {
@@ -179,7 +213,9 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
 
     return Scaffold(
       appBar: CustomAppBar(title: "ARTWORK", showProfileIcon: true, showBackArrow: true),
-      body: BlocBuilder<ArtworkCubit, ArtworkState>(
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : BlocBuilder<ArtworkCubit, ArtworkState>(
         bloc: widget.appFacade.artworkCubit,
         builder: (context, state) {
           if (state is ArtworkLoading) {
@@ -362,13 +398,21 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                             children: [
                               TextField(
                                 controller: _commentController,
+                                cursorColor: Colors.black, // Color del cursor
                                 decoration: InputDecoration(
-                                  border: OutlineInputBorder(
-                                    borderSide: const BorderSide(color: Colors.black),
+                                  filled: true, // Asegura que el fondo del campo esté relleno
+                                  fillColor: Colors.grey[200], // Color de fondo del campo
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.black), // Color del borde cuando está seleccionado
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.black), // Color del borde cuando no está seleccionado
                                     borderRadius: BorderRadius.circular(8),
                                   ),
                                   hintText: 'Write your comment...',
                                 ),
+                                style: TextStyle(color: Colors.black), // Asegura que el texto sea visible
                                 maxLines: 2,
                               ),
                               const SizedBox(height: 8),
@@ -377,7 +421,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                 height: 35,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black,
+                                    backgroundColor: Colors.black, // Color de fondo del botón
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -385,12 +429,15 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                   onPressed: _submitComment,
                                   child: const Text(
                                     "Submit",
-                                    style: TextStyle(color: Colors.white, fontSize: 14),
+                                    style: TextStyle(color: Colors.white, fontSize: 14), // Color del texto del botón
                                   ),
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              ListView.builder(
+                              // Mostrar un spinner si los comentarios están cargando
+                              _isCommentsLoading
+                                  ? Center(child: CircularProgressIndicator())
+                                  : ListView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 itemCount: state.comments?.length ?? 0,
@@ -407,7 +454,10 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                           children: [
                                             Text(
                                               username,
-                                              style: TextStyle(color: usernameColor, fontWeight: FontWeight.bold),
+                                              style: TextStyle(
+                                                color: usernameColor,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(comment.content),

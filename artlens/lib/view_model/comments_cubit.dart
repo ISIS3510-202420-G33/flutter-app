@@ -42,15 +42,22 @@ class CommentsCubit extends Cubit<CommentsState> {
   }
 
   // Método para publicar un comentario
+  // Método para publicar un comentario
   Future<void> postComment(String content, String date, int artworkId, int userId) async {
     try {
-      emit(CommentsLoading());
+      emit(CommentsLoading()); // Mostrar un indicador de carga mientras se envía el comentario
       await commentService.postComment(content, date, artworkId, userId);
-      emit(CommentPosted());
+
+      // Después de publicar el comentario, recargar los comentarios
+      final comments = await commentService.fetchCommentsByArtworkId(artworkId);
+
+      // Emitir los comentarios actualizados
+      emit(CommentsLoaded(comments: comments));
     } catch (e) {
       emit(CommentsError('Error posting comment: ${e.toString()}'));
     }
   }
+
 // Método para obtener el nombre de usuario a partir del ID
   Future<void> fetchUsername(int userId) async {
     emit(CommentsLoading());
