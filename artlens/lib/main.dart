@@ -38,6 +38,7 @@ void main() async {
   final userService = UserService();
   final favoritesCubit = FavoritesCubit(userService);
   final analyticEngineCubit = AnalyticEngineCubit(AnalyticEngineService());
+
   final appFacade = AppFacade(
     artworkCubit: artworkCubit,
     artistCubit: artistCubit,
@@ -48,7 +49,7 @@ void main() async {
     favoritesCubit: favoritesCubit,
     analyticEngineCubit: analyticEngineCubit,
   );
-  runApp(ArtLensApp(appFacade: appFacade));
+
   // Load saved session, if any
   await appFacade.loadSession();
 
@@ -98,17 +99,17 @@ class ArtLensApp extends StatelessWidget {
           bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
         ),
       ),
-        initialRoute: Routes.artwork,
-        onGenerateRoute: (settings) {
-     //DESCOMENTAR ESTA SECCION PARA PODER PROBAR DESDE EL EMULADOR SIN LEER CODIGO QR
-        if (settings.name == Routes.artwork) {
-          return Routes.generateRoute(RouteSettings(
-            name: Routes.artwork,
-            arguments: {'id': 1},
-          ), appFacade);
-        }
-        //return Routes.generateRoute(settings, appFacade);
-         }
+      initialRoute: Routes.home,
+      onGenerateRoute: (settings) {
+        // DESCOMENTAR ESTA SECCION PARA PODER PROBAR DESDE EL EMULADOR SIN LEER CODIGO QR
+        // if (settings.name == Routes.artwork) {
+        //   return Routes.generateRoute(RouteSettings(
+        //     name: Routes.artwork,
+        //     arguments: {'id': 1},
+        //   ), appFacade);
+        // }
+        return Routes.generateRoute(settings, appFacade);
+      },
     );
   }
 }

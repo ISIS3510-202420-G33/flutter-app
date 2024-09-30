@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiAdapter {
-  final String baseUrl = 'http://192.168.20.181:8000';
+  final String baseUrl = 'http://34.170.38.233:8000';
 
   static final ApiAdapter _instance = ApiAdapter._privateConstructor();
 
