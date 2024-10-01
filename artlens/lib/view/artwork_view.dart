@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import '../model/firestore_service.dart'; // Importación del servicio de Firestore
 import '../routes.dart';
 import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
@@ -35,6 +36,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   bool _isCommentsLoading = false; // Controlar el estado de carga de comentarios
   final TextEditingController _commentController = TextEditingController();
   final FlutterTts flutterTts = FlutterTts(); // Instancia de FlutterTTS
+  final FirestoreService _firestoreService = FirestoreService(); // Instancia del servicio Firestore
 
   @override
   void initState() {
@@ -44,6 +46,19 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     // Configura los parámetros iniciales de TTS
     flutterTts.setLanguage('en-US');
     flutterTts.setSpeechRate(0.5);
+
+    // Configurar el completion handler cuando el TTS finaliza
+    flutterTts.setCompletionHandler(() async {
+      setState(() {
+        _isPlaying = false;
+      });
+
+      // Agregar documento con acción 2 cuando el TTS se complete
+      await _firestoreService.addDocument('BQ32', {
+        'Acción': 2,
+        'Fecha': DateTime.now(),
+      });
+    });
 
     _initializeArtwork();
   }
@@ -143,7 +158,11 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     if (_commentController.text.isNotEmpty) {
       String content = _commentController.text;
       String date = DateFormat('yyyy-MM-dd').format(DateTime.now());
-
+      await _firestoreService.addDocument('BQ31', {
+        'Accion': 1,
+        'Fecha': DateTime.now(),
+        'Usuario': "falta esto",
+      });
       // Postear el comentario
       await widget.appFacade.postComment(content, date, _artworkId!);
 
@@ -163,8 +182,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     }
   }
 
-
-
   Future<void> _loadComments() async {
     setState(() {
       _isCommentsLoading = true; // Mostrar el spinner de carga
@@ -179,8 +196,6 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     });
   }
 
-
-
   Future<void> _startTTS(String text) async {
     if (_isPlaying) {
       await flutterTts.pause();
@@ -191,6 +206,12 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
       await flutterTts.speak(text);
       setState(() {
         _isPlaying = true;
+      });
+
+      // Agregar documento a Firestore cuando el TTS empieza (Acción: 1)
+      await _firestoreService.addDocument('BQ32', {
+        'Acción': 1,
+        'Fecha': DateTime.now(),
       });
     }
   }

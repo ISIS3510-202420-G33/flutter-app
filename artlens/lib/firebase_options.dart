@@ -16,9 +16,7 @@ import 'package:flutter/foundation.dart'
 /// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
-    if (kIsWeb) {
-      return web;
-    }
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
@@ -46,30 +44,23 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBWezA4dJvQSi9p8xJV3h32eUEdFWEgjpY',
-    appId: '1:896869029601:web:2207da0524656b62ca49a0',
-    messagingSenderId: '896869029601',
-    projectId: 'isis-3510',
-    authDomain: 'isis-3510.firebaseapp.com',
-    storageBucket: 'isis-3510.appspot.com',
-    measurementId: 'G-1HQ87ME9BF',
-  );
+
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyA7tzb8pOSCnPg9M_oPCdwytPRvKmgH2Bo',
-    appId: '1:896869029601:android:52dd320f00eca7a1ca49a0',
-    messagingSenderId: '896869029601',
-    projectId: 'isis-3510',
-    storageBucket: 'isis-3510.appspot.com',
+    apiKey: 'AIzaSyDh6OnOa0sjQdB7UhNfa9MhnDfTqBNUt24',
+    appId: '1:121731421743:android:b8f428cd2409c10ef858da',
+    messagingSenderId: '121731421743',
+    projectId: 'moviles-436717',
+    storageBucket: 'moviles-436717.appspot.com',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAsg4qV25Z52YeCAioGR5CJHUYAaL7zvB4',
-    appId: '1:896869029601:ios:b1676c25fcceb85fca49a0',
-    messagingSenderId: '896869029601',
-    projectId: 'isis-3510',
-    storageBucket: 'isis-3510.appspot.com',
+    apiKey: 'AIzaSyBG8HeP1KE8TNeSWINRKYz0MJHBAWsVfko',
+    appId: '1:121731421743:ios:21d558b75967eadff858da',
+    messagingSenderId: '121731421743',
+    projectId: 'moviles-436717',
+    storageBucket: 'moviles-436717.appspot.com',
     iosBundleId: 'com.example.artlens',
   );
+
 }
