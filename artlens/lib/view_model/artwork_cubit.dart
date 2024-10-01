@@ -72,18 +72,4 @@ class ArtworkCubit extends Cubit<ArtworkState> {
     }
   }
 
-  Future<void> recordActionInFirestore(int action, DateTime date, int userId) async {
-    try {
-        emit(ArtworkLoading());
-        await firestoreService.addDocument('BQ31', {
-          'Fecha': DateTime.now(),
-          'IdUsuario': userId,
-          'Accion': action,
-          });
-        emit(ArtworkLoaded());
-      } catch (e) {
-      emit(ArtworkError('Error recording action: ${e.toString()}'));
-    }
-  }
-
 }

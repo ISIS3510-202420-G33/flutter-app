@@ -182,15 +182,4 @@ class AppFacade {
     return null;
   }
 
-  // Registrar acción en una obra de arte
-  Future<void> recordArtworkAction(int action, DateTime date) async {
-    final userId = await _getUserId();  // Obtén el ID del usuario autenticado
-    if (userId != null) {
-      await artworkCubit.recordActionInFirestore(action, date, userId);
-    } else {
-      return null;
-    }
-  }
-
-
 }

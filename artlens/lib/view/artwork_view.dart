@@ -9,6 +9,7 @@ import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 import '../main.dart'; // Para usar el `RouteObserver`
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'artist_view.dart';
 
@@ -153,8 +154,13 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
       await _loadComments();
       DateTime date = DateTime.now();
       int action = 1;
-      await widget.appFacade.recordArtworkAction(action, date);
-
+      final prefs = await SharedPreferences.getInstance();
+      final username =  prefs.getString('userName');
+      await _firestoreService.addDocument('BQ31', {
+        'Usuario': username,
+        'Fecha': date,
+        'Accion': action,
+      });
     }
   }
 
@@ -165,8 +171,13 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
       DateTime date2 = DateTime.now();
 
       int action = 2;
-      await widget.appFacade.recordArtworkAction(action, date2);
-
+      final prefs = await SharedPreferences.getInstance();
+      final username =  prefs.getString('userName');
+      await _firestoreService.addDocument('BQ31', {
+        'Usuario': username,
+        'Fecha': date2,
+        'Accion': action,
+      });
       // Postear el comentario
       await widget.appFacade.postComment(content, date, _artworkId!);
 
