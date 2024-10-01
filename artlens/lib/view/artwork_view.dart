@@ -151,6 +151,10 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     // Si el foro se abrió, cargar los comentarios
     if (_isForumOpen) {
       await _loadComments();
+      DateTime date = DateTime.now();
+      int action = 1;
+      await widget.appFacade.recordArtworkAction(action, date);
+
     }
   }
 
@@ -158,11 +162,11 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     if (_commentController.text.isNotEmpty) {
       String content = _commentController.text;
       String date = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      await _firestoreService.addDocument('BQ31', {
-        'Accion': 1,
-        'Fecha': DateTime.now(),
-        'Usuario': "falta esto",
-      });
+      DateTime date2 = DateTime.now();
+
+      int action = 2;
+      await widget.appFacade.recordArtworkAction(action, date2);
+
       // Postear el comentario
       await widget.appFacade.postComment(content, date, _artworkId!);
 

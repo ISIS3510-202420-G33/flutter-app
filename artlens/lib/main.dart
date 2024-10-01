@@ -16,6 +16,7 @@ import 'package:artlens/model/artist_service.dart';
 import 'package:artlens/model/museum_service.dart';
 import 'package:artlens/model/comments_service.dart';
 import 'package:artlens/model/user_service.dart';
+import 'package:artlens/model/firestore_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -33,7 +34,7 @@ void main() async {
   // Initialize SharedPreferences before building the app
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService());
+  final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService(), FirestoreService());
   final artistCubit = ArtistCubit(ArtistService());
   final museumCubit = MuseumCubit(MuseumService());
   final commentsCubit = CommentsCubit(CommentsService());

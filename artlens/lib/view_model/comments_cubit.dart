@@ -42,7 +42,6 @@ class CommentsCubit extends Cubit<CommentsState> {
   }
 
   // Método para publicar un comentario
-  // Método para publicar un comentario
   Future<void> postComment(String content, String date, int artworkId, int userId) async {
     try {
       emit(CommentsLoading()); // Mostrar un indicador de carga mientras se envía el comentario
