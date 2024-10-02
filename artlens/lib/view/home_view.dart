@@ -103,9 +103,9 @@ class _HomeViewState extends State<HomeView> {
                         label: "View Map",
                         onPressed: () {
                           // Navigate to the map view
-                          Navigator.push(
+                          Navigator.pushNamed(
                             context,
-                            MaterialPageRoute(builder: (context) => const MapView()),
+                            Routes.map,
                           );
                         },
                       ),

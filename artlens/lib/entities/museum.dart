@@ -35,4 +35,9 @@ class Museum {
       image: json["fields"]['image'],
     );
   }
+  // Override toString method
+  @override
+  String toString() {
+    return 'Museum{id: $id, name: $name, latitude: $latitude, longitude: $longitude, category: $category, city: $city, country: $country, description: $description, image: $image}';
+  }
 }

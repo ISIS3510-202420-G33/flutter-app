@@ -187,9 +187,9 @@ class AppFacade {
   }
 
   // Obtener la lista de museos
-  Future<List<Museum>> fetchMuseums() async {
+  Future<List<Museum>> fetchMuseums(double latActual, double longActual) async {
     try {
-      final museums = await mapCubit.fetchMuseums();
+      final museums = await mapCubit.fetchMuseums(latActual, longActual);
       return museums;
     } catch (e) {
       // Manejo de errores
