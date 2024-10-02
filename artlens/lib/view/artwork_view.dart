@@ -29,6 +29,7 @@ class ArtworkView extends StatefulWidget {
 
 class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   int? _artworkId;
+  String? _documentId;
   int _selectedIndex = 1;
   bool _isLiked = false;
   bool _isForumOpen = false;
@@ -54,11 +55,19 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
         _isPlaying = false;
       });
 
-      // Agregar documento con acción 2 cuando el TTS se complete
-      await _firestoreService.addDocument('BQ32', {
-        'Acción': 2,
-        'Fecha': DateTime.now(),
-      });
+      if (_documentId != null) {
+        // Eliminar el documento con Acción 1
+        await _firestoreService.deleteDocument('BQ32', _documentId!);
+
+        // Agregar documento con Acción 2
+        await _firestoreService.addDocument('BQ32', {
+          'Acción': 2,
+          'Fecha': DateTime.now(),
+        });
+
+        // Limpiar el documentId después de eliminarlo
+        _documentId = null;
+      }
     });
 
     _initializeArtwork();
@@ -218,18 +227,23 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
         _isPlaying = false;
       });
     } else {
+      // Inicia el TTS
       await flutterTts.speak(text);
       setState(() {
         _isPlaying = true;
       });
 
       // Agregar documento a Firestore cuando el TTS empieza (Acción: 1)
-      await _firestoreService.addDocument('BQ32', {
+      String docId = await _firestoreService.addDocument('BQ32', {
         'Acción': 1,
         'Fecha': DateTime.now(),
       });
+
+      // Guardar el documentId
+      _documentId = docId;
     }
   }
+
 
   Future<void> _stopTTS() async {
     await flutterTts.stop();
