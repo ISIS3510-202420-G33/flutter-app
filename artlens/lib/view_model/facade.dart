@@ -1,5 +1,6 @@
 import '../entities/artwork.dart';
 import '../entities/user.dart';
+import '../entities/museum.dart';
 import '../view_model/artwork_cubit.dart';
 import '../view_model/artist_cubit.dart';
 import '../view_model/museum_cubit.dart';
@@ -7,6 +8,7 @@ import '../view_model/auth_cubit.dart';
 import '../view_model/favorites_cubit.dart';
 import '../view_model/analytic_engine_cubit.dart';
 import '../view_model/comments_cubit.dart';
+import '../view_model/map_cubit.dart';
 import '../model/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,6 +21,7 @@ class AppFacade {
   final FavoritesCubit favoritesCubit;
   final UserService userService;
   final AnalyticEngineCubit analyticEngineCubit;
+  final MapCubit mapCubit;
 
 
   AppFacade({
@@ -29,7 +32,8 @@ class AppFacade {
     required this.authCubit,
     required this.favoritesCubit,
     required this.userService,
-    required this.analyticEngineCubit
+    required this.analyticEngineCubit,
+    required this.mapCubit,
   });
 
   // Authentication
@@ -182,4 +186,15 @@ class AppFacade {
     return null;
   }
 
+  // Obtener la lista de museos
+  Future<List<Museum>> fetchMuseums() async {
+    try {
+      final museums = await mapCubit.fetchMuseums();
+      return museums;
+    } catch (e) {
+      // Manejo de errores
+      print('Error fetching museums: $e');
+      return [];
+    }
+  }
 }
