@@ -57,7 +57,7 @@ class Routes {
         );
 
       case map:
-        return MaterialPageRoute(builder: (_) => MapView());
+        return MaterialPageRoute(builder: (_) => MapView(appFacade: appFacade));
 
       case signUp:
         return MaterialPageRoute(builder: (_) => SignUpPage());

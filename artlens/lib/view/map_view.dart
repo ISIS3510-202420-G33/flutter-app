@@ -1,13 +1,22 @@
 import 'dart:async';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import '../widgets/custom_app_bar.dart';
 import '../routes.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
+import '../view_model/facade.dart';
+
 
 class MapView extends StatefulWidget {
-  const MapView({super.key});
+  final AppFacade appFacade;
+
+  const MapView({
+    Key? key,
+    required this.appFacade,
+  }) : super(key:key);
+
 
   @override
   State<MapView> createState() => _MapViewState();
@@ -37,7 +46,37 @@ class _MapViewState extends State<MapView> {
     super.initState();
     getLocationUpdates();
   }
+  Set<Marker> _museumMarkers = {};
 
+
+  Future<void> fetchMuseums(double latActual, double longActual) async {
+    try {
+      print("Actual position");
+      print(latActual);
+      print(longActual);
+      print("Fetching museums...");  // Add this line
+      final museums = await widget.appFacade.fetchMuseums(latActual, longActual);
+
+      _museumMarkers.clear();
+      for (var museum in museums) {
+        double lat = double.parse(museum.latitude);
+        double long = double.parse(museum.longitude);
+        LatLng position = LatLng(lat, long);
+        print(position);
+
+        _museumMarkers.add(Marker(
+          markerId: MarkerId(museum.id.toString()),
+          icon: BitmapDescriptor.defaultMarker,
+          position: position,
+          infoWindow: InfoWindow(title: museum.name),
+        ));
+      }
+      print("Museums updated");
+      setState(() {});
+    } catch (e) {
+      print('Error fetching museums: $e');
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,64 +86,7 @@ class _MapViewState extends State<MapView> {
           : GoogleMap(
         onMapCreated: (GoogleMapController controller) => _mapController.complete(controller),
         initialCameraPosition: CameraPosition(target: _pUniversidadAndes, zoom: 14),
-        markers: {
-          // Marcadores de los museos
-          Marker(
-            markerId: MarkerId("_universidadDeLosAndes"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pUniversidadAndes,
-          ),
-          Marker(
-            markerId: MarkerId("_museoDelOro"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoDelOro,
-          ),
-          Marker(
-            markerId: MarkerId("_museoNacional"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoNacional,
-          ),
-          Marker(
-            markerId: MarkerId("_museoBotero"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoBotero,
-          ),
-          Marker(
-            markerId: MarkerId("_casaDeMoneda"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pCasaDeMoneda,
-          ),
-          Marker(
-            markerId: MarkerId("_mambo"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pMambo,
-          ),
-          Marker(
-            markerId: MarkerId("_museoDeBogota"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoDeBogota,
-          ),
-          Marker(
-            markerId: MarkerId("_museoColonial"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoColonial,
-          ),
-          Marker(
-            markerId: MarkerId("_museoEsmeralda"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoEsmeralda,
-          ),
-          Marker(
-            markerId: MarkerId("_museoSantaClara"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pMuseoSantaClara,
-          ),
-          Marker(
-            markerId: MarkerId("_planetarioBogota"),
-            icon: BitmapDescriptor.defaultMarker,
-            position: _pPlanetarioBogota,
-          ),
-        },
+        markers: _museumMarkers,
         circles: _currentP == null
             ? {}
             : {
@@ -154,6 +136,7 @@ class _MapViewState extends State<MapView> {
         setState(() {
           _currentP = LatLng(currentLocation.latitude!, currentLocation.longitude!);
           _cameraToPosition(_currentP!);
+          fetchMuseums(currentLocation.latitude!, currentLocation.longitude!);
         });
       }
     });

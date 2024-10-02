@@ -20,10 +20,10 @@ class MapCubit extends Cubit<MapState> {
   MapCubit(this.mapService) : super(MapState(museums: []));
 
   // Método para obtener los museos
-  Future<List<Museum>> fetchMuseums() async {
+  Future<List<Museum>> fetchMuseums(double latActual, double longActual) async {
     emit(MapState(museums: state.museums, isLoading: true));
     try {
-      final museums = await mapService.fetchMuseums();
+      final museums = await mapService.fetchMuseums(latActual, longActual);
       emit(MapState(museums: museums, isLoading: false));
       return museums; // Devuelve la lista de museos
     } catch (e) {
