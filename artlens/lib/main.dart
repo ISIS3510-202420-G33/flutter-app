@@ -10,12 +10,15 @@ import 'package:artlens/view_model/auth_cubit.dart';
 import 'package:artlens/view_model/favorites_cubit.dart';
 import 'package:artlens/view_model/comments_cubit.dart';
 import 'package:artlens/view_model/analytic_engine_cubit.dart';
+import 'package:artlens/view_model/map_cubit.dart';
 import 'package:artlens/model/artwork_service.dart';
 import 'package:artlens/model/analytic_engine_service.dart';
 import 'package:artlens/model/artist_service.dart';
 import 'package:artlens/model/museum_service.dart';
+import 'package:artlens/model/map_service.dart';
 import 'package:artlens/model/comments_service.dart';
 import 'package:artlens/model/user_service.dart';
+import 'package:artlens/model/firestore_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -33,7 +36,7 @@ void main() async {
   // Initialize SharedPreferences before building the app
   SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService());
+  final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService(), FirestoreService());
   final artistCubit = ArtistCubit(ArtistService());
   final museumCubit = MuseumCubit(MuseumService());
   final commentsCubit = CommentsCubit(CommentsService());
@@ -41,6 +44,9 @@ void main() async {
   final userService = UserService();
   final favoritesCubit = FavoritesCubit(userService);
   final analyticEngineCubit = AnalyticEngineCubit(AnalyticEngineService());
+  final mapCubit = MapCubit(MapService());
+
+
 
   final appFacade = AppFacade(
     artworkCubit: artworkCubit,
@@ -51,6 +57,7 @@ void main() async {
     commentsCubit: commentsCubit,
     favoritesCubit: favoritesCubit,
     analyticEngineCubit: analyticEngineCubit,
+    mapCubit: mapCubit,
   );
 
   // Load saved session, if any
@@ -65,9 +72,10 @@ void main() async {
         BlocProvider(create: (_) => museumCubit),
         BlocProvider(create: (_) => authCubit),
         BlocProvider(create: (_) => favoritesCubit),
-        BlocProvider(create: (_) => analyticEngineCubit)
+        BlocProvider(create: (_) => analyticEngineCubit),
+        BlocProvider(create: (_) => mapCubit)
       ],
-      child: ArtLensApp(appFacade: AppFacade(artworkCubit: artworkCubit, artistCubit: artistCubit, museumCubit: museumCubit, authCubit: authCubit, favoritesCubit: favoritesCubit, commentsCubit: commentsCubit, userService: userService, analyticEngineCubit: analyticEngineCubit),),
+      child: ArtLensApp(appFacade: AppFacade(artworkCubit: artworkCubit, artistCubit: artistCubit, museumCubit: museumCubit, authCubit: authCubit, favoritesCubit: favoritesCubit, commentsCubit: commentsCubit, userService: userService, analyticEngineCubit: analyticEngineCubit, mapCubit: mapCubit),),
     ),
   );
 }

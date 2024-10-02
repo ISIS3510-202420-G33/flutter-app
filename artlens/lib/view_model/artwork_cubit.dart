@@ -6,6 +6,7 @@ import '../entities/comment.dart';
 import '../model/artwork_service.dart';
 import '../model/artist_service.dart';
 import '../model/museum_service.dart';
+import '../model/firestore_service.dart';
 
 
 abstract class ArtworkState {}
@@ -34,8 +35,9 @@ class ArtworkCubit extends Cubit<ArtworkState> {
   final ArtworkService artworkService;
   final ArtistService artistService;
   final MuseumService museumService;
+  final FirestoreService firestoreService;
 
-  ArtworkCubit(this.artworkService, this.artistService, this.museumService) : super(ArtworkInitial());
+  ArtworkCubit(this.artworkService, this.artistService, this.museumService, this.firestoreService) : super(ArtworkInitial());
 
   Future<void> fetchArtworkById(int id) async {
     try {
@@ -69,4 +71,5 @@ class ArtworkCubit extends Cubit<ArtworkState> {
       emit(ArtworkError('Error fetching artworks by artist id: ${e.toString()}'));
     }
   }
+
 }
