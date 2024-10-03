@@ -1,22 +1,28 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_app_bar.dart';
-import '../view_model/auth_cubit.dart';
+import '../routes.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../view_model/facade.dart';
 
-class LoginPage extends StatefulWidget {
+class LogInView extends StatefulWidget {
+  final AppFacade appFacade;
+
+  const LogInView({
+    Key? key,
+    required this.appFacade,
+  }) : super(key: key);
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends State<LogInView> {
   final TextEditingController _userNameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final appFacade = context.read<AppFacade>();
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -105,12 +111,12 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           onPressed: () async {
                             print('Presionaste el botón de Log In');
-                            await appFacade.authenticateUser(
+                            await widget.appFacade.authenticateUser(
                               _userNameController.text,
                               _passwordController.text,
                             );
 
-                            if (appFacade.isLoggedIn()) {
+                            if (widget.appFacade.isLoggedIn()) {
                               // Show success SnackBar with orange color
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -131,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
                               );
 
                               // Navigate to home immediately
-                              Navigator.pushNamed(context, '/');
+                              Navigator.pushNamedAndRemoveUntil(context, Routes.home, (route) => false);
                             } else {
                               // Show error SnackBar
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -173,7 +179,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           ),
                           onPressed: () {
-                            Navigator.pushNamed(context, '/signUp');
+                            Navigator.pushNamed(
+                                context,
+                                Routes.signUp
+                            );
                           },
                           child: Text('Create new account', style: TextStyle(color: Colors.white)),
                         ),

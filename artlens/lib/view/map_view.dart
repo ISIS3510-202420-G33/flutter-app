@@ -27,16 +27,6 @@ class _MapViewState extends State<MapView> {
   final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
 
   static const LatLng _pUniversidadAndes = LatLng(4.603104981314923, -74.06507505903969);
-  static const LatLng _pMuseoDelOro = LatLng(4.602126680305319, -74.07205183368727);
-  static const LatLng _pMuseoNacional = LatLng(4.615551, -74.068818);
-  static const LatLng _pMuseoBotero = LatLng(4.598250, -74.075624);
-  static const LatLng _pCasaDeMoneda = LatLng(4.598900, -74.075668);
-  static const LatLng _pMambo = LatLng(4.611277, -74.070438);
-  static const LatLng _pMuseoDeBogota = LatLng(4.599825, -74.076156);
-  static const LatLng _pMuseoColonial = LatLng(4.602019, -74.071960);
-  static const LatLng _pMuseoEsmeralda = LatLng(4.601464, -74.068297);
-  static const LatLng _pMuseoSantaClara = LatLng(4.597944, -74.072523);
-  static const LatLng _pPlanetarioBogota = LatLng(4.609710, -74.070089);
 
   LatLng? _currentP = null;
   int _selectedIndex = 0; // Para manejar el índice del BottomNavigationBar

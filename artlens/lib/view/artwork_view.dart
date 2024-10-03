@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
-import '../model/firestore_service.dart'; // Importación del servicio de Firestore
+import '../model/firestore_service.dart';
 import '../routes.dart';
 import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
@@ -304,19 +304,20 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                 ),
                               ),
                             ),
-                            IconButton(
-                              icon: Container(
-                                padding: const EdgeInsets.all(8.0),
-                                decoration: BoxDecoration(
-                                  color: _isLiked ? theme.colorScheme.secondary : Colors.black,
-                                  shape: BoxShape.circle,
+                            if (widget.appFacade.isLoggedIn())
+                              IconButton(
+                                icon: Container(
+                                  padding: const EdgeInsets.all(8.0),
+                                  decoration: BoxDecoration(
+                                    color: _isLiked ? theme.colorScheme.secondary : Colors.black,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Icon(Icons.star, color: Colors.white),
+                                  ),
                                 ),
-                                child: Center(
-                                  child: Icon(Icons.star, color: Colors.white),
-                                ),
+                                onPressed: _onLikePressed,
                               ),
-                              onPressed: _onLikePressed,
-                            ),
                           ],
                         ),
                       ),
@@ -446,43 +447,45 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TextField(
-                                controller: _commentController,
-                                cursorColor: Colors.black, // Color del cursor
-                                decoration: InputDecoration(
-                                  filled: true, // Asegura que el fondo del campo esté relleno
-                                  fillColor: Colors.grey[200], // Color de fondo del campo
-                                  focusedBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black), // Color del borde cuando está seleccionado
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(color: Colors.black), // Color del borde cuando no está seleccionado
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  hintText: 'Write your comment...',
-                                ),
-                                style: TextStyle(color: Colors.black), // Asegura que el texto sea visible
-                                maxLines: 2,
-                              ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: 150,
-                                height: 35,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.black, // Color de fondo del botón
-                                    shape: RoundedRectangleBorder(
+                              if (widget.appFacade.isLoggedIn()) ...[
+                                TextField(
+                                  controller: _commentController,
+                                  cursorColor: Colors.black, // Color del cursor
+                                  decoration: InputDecoration(
+                                    filled: true, // Asegura que el fondo del campo esté relleno
+                                    fillColor: Colors.grey[200], // Color de fondo del campo
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.black), // Color del borde cuando está seleccionado
                                       borderRadius: BorderRadius.circular(8),
                                     ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.black), // Color del borde cuando no está seleccionado
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    hintText: 'Write your comment...',
                                   ),
-                                  onPressed: _submitComment,
-                                  child: const Text(
-                                    "Submit",
-                                    style: TextStyle(color: Colors.white, fontSize: 14), // Color del texto del botón
+                                  style: TextStyle(color: Colors.black), // Asegura que el texto sea visible
+                                  maxLines: 2,
+                                ),
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: 150,
+                                  height: 35,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black, // Color de fondo del botón
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    onPressed: _submitComment,
+                                    child: const Text(
+                                      "Submit",
+                                      style: TextStyle(color: Colors.white, fontSize: 14), // Color del texto del botón
+                                    ),
                                   ),
                                 ),
-                              ),
+                              ],
                               const SizedBox(height: 16),
                               // Mostrar un spinner si los comentarios están cargando
                               _isCommentsLoading

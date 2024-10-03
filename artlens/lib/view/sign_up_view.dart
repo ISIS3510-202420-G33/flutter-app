@@ -1,23 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import '../view_model/facade.dart';  // Importa la fachada
-import '../view_model/auth_cubit.dart';  // Importa AuthCubit para loguear automáticamente
+import '../view_model/facade.dart';
 import '../widgets/custom_app_bar.dart';
 
-class SignUpPage extends StatefulWidget {
-  static final SignUpPage _instance = SignUpPage._internal();
+class SignUpView extends StatefulWidget {
+  final AppFacade appFacade;
 
-  SignUpPage._internal();
-
-  factory SignUpPage() {
-    return _instance;
-  }
+  const SignUpView({
+    Key? key,
+    required this.appFacade,
+  }) : super(key: key);
 
   @override
   _SignUpPageState createState() => _SignUpPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
+class _SignUpPageState extends State<SignUpView> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _userNameController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -37,9 +34,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    final appFacade = context.read<AppFacade>();  // Obtener la fachada
-    final authCubit = context.read<AuthCubit>();  // Obtener AuthCubit para loguear automáticamente
-    final theme = Theme.of(context);  // Obtener el tema para el color naranja
+    final theme = Theme.of(context);
 
     // Usamos MediaQuery para obtener el tamaño de la pantalla
     final screenHeight = MediaQuery.of(context).size.height;
@@ -185,7 +180,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   }
 
                   // Intentar registrar al usuario
-                  String? result = await appFacade.registerUser(name, userName, email, password);
+                  String? result = await widget.appFacade.registerUser(name, userName, email, password);
 
                   if (result == 'success') {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -196,9 +191,9 @@ class _SignUpPageState extends State<SignUpPage> {
                     );
 
                     // Iniciar sesión automáticamente
-                    await appFacade.authenticateUser(userName, password);
+                    await widget.appFacade.authenticateUser(userName, password);
 
-                    if (appFacade.isLoggedIn()) {
+                    if (widget.appFacade.isLoggedIn()) {
                       Navigator.pushNamed(context, '/');  // Redirige al home si el login es exitoso
                     } else {
                       _showErrorSnackBar(context, 'Error logging in after registration.');

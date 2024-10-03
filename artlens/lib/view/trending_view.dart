@@ -46,7 +46,16 @@ class _TrendingViewState extends State<TrendingView> {
 
     if (userId != null) {
       widget.appFacade.fetchRecommendationsByUserId(userId!);
+    } else {
+      widget.appFacade.clearRecommendations();
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Verificar si el usuario está logueado cada vez que la vista cambie de estado
+    _loadUserId();
   }
 
   // Manejar la navegación entre las vistas del bottom navigation bar

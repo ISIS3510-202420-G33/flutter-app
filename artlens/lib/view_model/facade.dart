@@ -41,7 +41,6 @@ class AppFacade {
     try {
       User? user = await userService.authenticateUser(username, password);
       if (user != null) {
-        await _saveUserToPreferences(user);  // Save user info to shared preferences
         authCubit.logIn(user);  // Update AuthCubit to authenticated state
         print("User data saved: ${user.userName}");
       } else {
@@ -87,15 +86,6 @@ class AppFacade {
 
       authCubit.logIn(user);  // Log in with the loaded user data
     }
-  }
-
-  // Helper method to save user data to shared preferences
-  Future<void> _saveUserToPreferences(User user) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('userId', user.id);
-    await prefs.setString('name', user.name);
-    await prefs.setString('userName', user.userName);
-    await prefs.setString('email', user.email);
   }
 
   // Helper method to clear session data from shared preferences
@@ -167,6 +157,10 @@ class AppFacade {
   // Obtener comentarios de una obra de arte
   Future<void> fetchCommentsByArtworkId(int artworkId) async {
     await commentsCubit.fetchCommentsByArtworkId(artworkId);
+  }
+
+  void clearRecommendations() {
+    analyticEngineCubit.clearRecommendations();
   }
 
   // Publicar un comentario en una obra de arte
