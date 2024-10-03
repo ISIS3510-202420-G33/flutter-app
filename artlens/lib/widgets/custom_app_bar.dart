@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../view/login_view.dart';
+import '../routes.dart';
 import '../view_model/auth_cubit.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -112,7 +112,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                                   title: Text('View Favorites'),
                                   onTap: () {
                                     Navigator.pop(context); // Close the dialog
-                                    Navigator.pushNamed(context, '/favorites');
+                                    Navigator.pushNamed(
+                                        context,
+                                        Routes.favorites
+                                    );
                                   },
                                 ),
                                 ListTile(
@@ -121,10 +124,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                                   onTap: () {
                                     Navigator.pop(context); // Close the dialog
                                     authCubit.logOut();
-                                    Navigator.pushReplacement(
+                                    Navigator.pushNamed(
                                       context,
-                                      MaterialPageRoute(
-                                          builder: (context) => LoginPage()),
+                                      Routes.logIn
                                     );
                                   },
                                 ),
@@ -135,9 +137,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       );
                     } else {
                       // Navigate to LoginPage if the user is not logged in
-                      Navigator.push(
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(builder: (context) => LoginPage()),
+                        Routes.logIn,
                       );
                     }
                   },

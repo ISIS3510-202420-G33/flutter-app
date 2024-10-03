@@ -32,7 +32,11 @@ class AnalyticEngineCubit extends Cubit<AnalyticEngineState> {
       final recommendationsByUserId = await analyticEngineService.fetchRecommendationsByUserId(id);
       emit(AnalyticEngineLoaded(recommendationsByUserId));
     } catch (e) {
-      emit(AnalyticEngineError('Error fetching artworks by artist id: ${e.toString()}'));
+      emit(AnalyticEngineError('Error fetching recommendations by user id: ${e.toString()}'));
     }
+  }
+
+  void clearRecommendations() {
+    emit(AnalyticEngineLoaded([]));
   }
 }

@@ -4,8 +4,9 @@ import '../view_model/favorites_cubit.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../entities/artwork.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
-import '../routes.dart'; // Para la navegación a ArtworkView
+import 'package:shared_preferences/shared_preferences.dart';
+import '../routes.dart';
+import '../view_model/facade.dart';
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -15,12 +16,19 @@ class NoGlowScrollBehavior extends ScrollBehavior {
 }
 
 class FavoritesView extends StatefulWidget {
+  final AppFacade appFacade;
+
+  const FavoritesView({
+    Key? key,
+    required this.appFacade,
+  }) : super(key: key);
+
   @override
   _FavoritesViewState createState() => _FavoritesViewState();
 }
 
 class _FavoritesViewState extends State<FavoritesView> {
-  int _selectedIndex = 2; // Controlar la selección de la barra de navegación
+  int _selectedIndex = 2;
   int? userId;
   Map<int, bool> isPressed = {}; // Map para controlar qué íconos han sido presionados
 
@@ -38,8 +46,7 @@ class _FavoritesViewState extends State<FavoritesView> {
     });
 
     if (userId != null) {
-      // Obtén los favoritos del usuario
-      context.read<FavoritesCubit>().fetchFavorites(userId!);
+      widget.appFacade.fetchFavorites();
     }
   }
 

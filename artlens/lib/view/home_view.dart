@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../routes.dart';
 import '../widgets/custom_button.dart';
-import 'map_view.dart';
 import 'package:artlens/widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 
@@ -31,20 +30,12 @@ class _HomeViewState extends State<HomeView> {
         Navigator.pushNamed(
           context,
           Routes.camera,
-        ).then((_) {
-          setState(() {
-            _selectedIndex = 0;
-          });
-        });
+        );
       } else if (index == 2) {
         Navigator.pushNamed(
           context,
           Routes.trending,
-        ).then((_) {
-          setState(() {
-            _selectedIndex = 0;
-          });
-        });
+        );
       }
     });
   }

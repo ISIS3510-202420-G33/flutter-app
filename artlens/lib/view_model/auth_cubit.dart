@@ -1,6 +1,7 @@
 import 'package:bloc/bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../entities/user.dart';
+import '../view_model/analytic_engine_cubit.dart';
 
 abstract class AuthState {}
 
@@ -36,14 +37,17 @@ class AuthCubit extends Cubit<AuthState> {
   // Save the user session in SharedPreferences (only id and name)
   Future<void> _saveUserSession(User user) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('id', user.id);
+    await prefs.setInt('userId', user.id);
+    await prefs.setString('name', user.name);
     await prefs.setString('userName', user.userName);
+    await prefs.setString('email', user.email);
   }
 
   // Clear the user session from SharedPreferences
   Future<void> _clearUserSession() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();  // Clears all stored preferences
+
   }
 
   // Optionally: Load the user session on startup (only id and name)
