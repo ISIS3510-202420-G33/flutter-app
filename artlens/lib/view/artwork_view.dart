@@ -39,6 +39,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   final TextEditingController _commentController = TextEditingController();
   final FlutterTts flutterTts = FlutterTts(); // Instancia de FlutterTTS
   final FirestoreService _firestoreService = FirestoreService(); // Instancia del servicio Firestore
+  List<Map<String, String>> _commentsWithUsernames = [];
 
   @override
   void initState() {
@@ -212,10 +213,18 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     });
 
     // Cargar los comentarios
-    await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
-
-    // Detener el spinner y actualizar el estado
+    final comments = await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
+    List<Map<String, String>> commentsWithUsernames = [];
+    for (var comment in comments) {
+      final username  = await widget.appFacade.getUsername(comment.user);
+      _commentsWithUsernames.add({
+        'username': username ?? 'Unknown User', // Si no hay username, mostrar 'Unknown User'
+        'content': comment.content,
+      });
+    }
+    // Actualizar el estado para mostrar los comentarios con usernames
     setState(() {
+      _commentsWithUsernames = commentsWithUsernames;
       _isCommentsLoading = false;
     });
   }
@@ -499,19 +508,24 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                       final username = snapshot.data ?? 'Unknown User';
                                       final usernameColor = theme.colorScheme.secondary;
                                       return ListTile(
-                                        title: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              username,
-                                              style: TextStyle(
-                                                color: usernameColor,
-                                                fontWeight: FontWeight.bold,
+                                        title: RichText(
+                                          text: TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: '$username: ',
+                                                style: TextStyle(
+                                                  color: usernameColor,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Text(comment.content),
-                                          ],
+                                              TextSpan(
+                                                text: comment.content,
+                                                style: theme.textTheme.bodyMedium?.copyWith(
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       );
                                     },

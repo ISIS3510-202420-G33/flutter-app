@@ -31,13 +31,15 @@ class CommentsCubit extends Cubit<CommentsState> {
   CommentsCubit(this.commentService) : super(CommentsInitial());
 
   // Método para obtener comentarios de una obra
-  Future<void> fetchCommentsByArtworkId(int artworkId) async {
+  Future<List<Comment>> fetchCommentsByArtworkId(int artworkId) async {
     try {
       emit(CommentsLoading());
       final comments = await commentService.fetchCommentsByArtworkId(artworkId);
       emit(CommentsLoaded(comments: comments));
+      return comments;
     } catch (e) {
       emit(CommentsError('Error fetching comments: ${e.toString()}'));
+      return [];
     }
   }
 
