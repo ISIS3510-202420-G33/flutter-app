@@ -1,4 +1,5 @@
 import '../entities/artwork.dart';
+import '../entities/comment.dart';
 import '../entities/user.dart';
 import '../entities/museum.dart';
 import '../view_model/artwork_cubit.dart';
@@ -165,8 +166,15 @@ class AppFacade {
   }
 
   // Obtener comentarios de una obra de arte
-  Future<void> fetchCommentsByArtworkId(int artworkId) async {
-    await commentsCubit.fetchCommentsByArtworkId(artworkId);
+  Future<List<Comment>> fetchCommentsByArtworkId(int artworkId) async {
+    try {
+      final comments = await commentsCubit.fetchCommentsByArtworkId(artworkId);
+      return comments;
+    } catch (e) {
+    // Manejo de errores
+    print('Error fetching museums: $e');
+    return [];
+    }
   }
 
   // Publicar un comentario en una obra de arte
