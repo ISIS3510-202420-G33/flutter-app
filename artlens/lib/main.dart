@@ -1,3 +1,5 @@
+import 'package:artlens/view_model/spotlight_artworks_cubit.dart';
+import 'package:artlens/view_model/recommendations_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:provider/provider.dart';
@@ -9,7 +11,6 @@ import 'package:artlens/view_model/museum_cubit.dart';
 import 'package:artlens/view_model/auth_cubit.dart';
 import 'package:artlens/view_model/favorites_cubit.dart';
 import 'package:artlens/view_model/comments_cubit.dart';
-import 'package:artlens/view_model/analytic_engine_cubit.dart';
 import 'package:artlens/view_model/map_cubit.dart';
 import 'package:artlens/model/artwork_service.dart';
 import 'package:artlens/model/analytic_engine_service.dart';
@@ -21,6 +22,8 @@ import 'package:artlens/model/user_service.dart';
 import 'package:artlens/model/firestore_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'entities/artwork.dart';
 import 'firebase_options.dart';
 
 /// Inicializar un RouteObserver para seguir las rutas
@@ -33,8 +36,16 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Initialize Hive
+  await Hive.initFlutter();
+  Hive.registerAdapter(ArtworkAdapter());
+
+  // Open necessary Hive boxes
+  await Hive.openBox<Artwork>('spotlightArtworks');
+  await Hive.openBox('metadata'); // For storing metadata like last refresh date
+
   // Initialize SharedPreferences before building the app
-  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await SharedPreferences.getInstance();
 
   final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService(), FirestoreService());
   final artistCubit = ArtistCubit(ArtistService());
@@ -43,21 +54,23 @@ void main() async {
   final authCubit = AuthCubit();
   final userService = UserService();
   final favoritesCubit = FavoritesCubit(userService);
-  final analyticEngineCubit = AnalyticEngineCubit(AnalyticEngineService());
   final mapCubit = MapCubit(MapService());
+  final spotlightArtworksCubit = SpotlightArtworksCubit(AnalyticEngineService());
+  final recommendationsCubit = RecommendationsCubit(AnalyticEngineService());
 
 
 
   final appFacade = AppFacade(
-    artworkCubit: artworkCubit,
-    artistCubit: artistCubit,
-    museumCubit: museumCubit,
-    authCubit: authCubit,
-    userService: userService,
-    commentsCubit: commentsCubit,
-    favoritesCubit: favoritesCubit,
-    analyticEngineCubit: analyticEngineCubit,
-    mapCubit: mapCubit,
+    artworkCubit,
+    artistCubit,
+    commentsCubit,
+    museumCubit,
+    authCubit,
+    favoritesCubit,
+    userService,
+    mapCubit,
+    spotlightArtworksCubit,
+    recommendationsCubit
   );
 
   // Load saved session, if any
@@ -72,10 +85,9 @@ void main() async {
         BlocProvider(create: (_) => museumCubit),
         BlocProvider(create: (_) => authCubit),
         BlocProvider(create: (_) => favoritesCubit),
-        BlocProvider(create: (_) => analyticEngineCubit),
         BlocProvider(create: (_) => mapCubit)
       ],
-      child: ArtLensApp(appFacade: AppFacade(artworkCubit: artworkCubit, artistCubit: artistCubit, museumCubit: museumCubit, authCubit: authCubit, favoritesCubit: favoritesCubit, commentsCubit: commentsCubit, userService: userService, analyticEngineCubit: analyticEngineCubit, mapCubit: mapCubit),),
+      child: ArtLensApp(appFacade: appFacade),
     ),
   );
 }

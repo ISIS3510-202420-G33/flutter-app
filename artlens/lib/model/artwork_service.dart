@@ -1,10 +1,13 @@
 import 'dart:convert';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../entities/artwork.dart';
 import '../model/api_adapter.dart';
 import '../entities/comment.dart';
 
 class ArtworkService {
   static final ArtworkService _instance = ArtworkService._internal();
+  final ApiAdapter apiAdapter = ApiAdapter.instance;
+  final CacheManager _cacheManager = DefaultCacheManager();
 
   factory ArtworkService() {
     return _instance;
@@ -12,15 +15,33 @@ class ArtworkService {
 
   ArtworkService._internal();
 
-  final ApiAdapter apiAdapter = ApiAdapter.instance;
-
   Future<Artwork> fetchArtworkById(int id) async {
-    final response = await apiAdapter.get('/artworks/$id');
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonResponse = jsonDecode(response.body);
-      return Artwork.fromJson(jsonResponse[0]);
+    // Cache key to store artwork data
+    final cacheKey = 'artwork_$id';
+    final cachedFile = await _cacheManager.getFileFromCache(cacheKey);
+
+    if (cachedFile != null) {
+      // If the file exists in the cache, use it
+      final cachedData = await cachedFile.file.readAsString();
+      return Artwork.fromJson(jsonDecode(cachedData));
     } else {
-      throw Exception('Failed to load artwork: ${response.reasonPhrase}');
+      // If not in cache, fetch from the network
+      final response = await apiAdapter.get('/artworks/$id');
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonResponse = jsonDecode(response.body);
+        final artwork = Artwork.fromJson(jsonResponse[0]);
+
+        // Cache the response for future use
+        await _cacheManager.putFile(
+          cacheKey,
+          response.bodyBytes,
+          fileExtension: 'json',
+        );
+
+        return artwork;
+      } else {
+        throw Exception('Failed to load artwork: ${response.reasonPhrase}');
+      }
     }
   }
 

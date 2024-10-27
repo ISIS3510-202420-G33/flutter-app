@@ -1,7 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../entities/user.dart';
-import '../view_model/analytic_engine_cubit.dart';
 
 abstract class AuthState {}
 
