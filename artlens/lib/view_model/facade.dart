@@ -1,3 +1,5 @@
+import 'package:artlens/view_model/spotlight_artworks_cubit.dart';
+import 'package:artlens/view_model/recommendations_cubit.dart';
 import '../entities/artwork.dart';
 import '../entities/comment.dart';
 import '../entities/user.dart';
@@ -7,7 +9,6 @@ import '../view_model/artist_cubit.dart';
 import '../view_model/museum_cubit.dart';
 import '../view_model/auth_cubit.dart';
 import '../view_model/favorites_cubit.dart';
-import '../view_model/analytic_engine_cubit.dart';
 import '../view_model/comments_cubit.dart';
 import '../view_model/map_cubit.dart';
 import '../model/user_service.dart';
@@ -21,21 +22,24 @@ class AppFacade {
   final AuthCubit authCubit;
   final FavoritesCubit favoritesCubit;
   final UserService userService;
-  final AnalyticEngineCubit analyticEngineCubit;
   final MapCubit mapCubit;
+  final SpotlightArtworksCubit spotlightArtworksCubit;
+  final RecommendationsCubit recommendationsCubit;
 
 
-  AppFacade({
-    required this.artworkCubit,
-    required this.artistCubit,
-    required this.commentsCubit,
-    required this.museumCubit,
-    required this.authCubit,
-    required this.favoritesCubit,
-    required this.userService,
-    required this.analyticEngineCubit,
-    required this.mapCubit,
-  });
+
+  AppFacade(
+    this.artworkCubit,
+    this.artistCubit,
+    this.commentsCubit,
+    this.museumCubit,
+    this.authCubit,
+    this.favoritesCubit,
+    this.userService,
+    this.mapCubit,
+    this.spotlightArtworksCubit,
+    this.recommendationsCubit,
+  );
 
   // Authentication
   Future<void> authenticateUser(String username, String password) async {
@@ -119,7 +123,7 @@ class AppFacade {
   }
 
   void fetchRecommendationsByUserId(int id) {
-    analyticEngineCubit.fetchRecommendationsByUserId(id);
+    recommendationsCubit.fetchRecommendationsByUserId(id);
   }
 
   // Favorites management (nuevo)
@@ -168,7 +172,7 @@ class AppFacade {
   }
 
   void clearRecommendations() {
-    analyticEngineCubit.clearRecommendations();
+    recommendationsCubit.clearRecommendations();
   }
 
   // Publicar un comentario en una obra de arte
@@ -198,5 +202,9 @@ class AppFacade {
       print('Error fetching museums: $e');
       return [];
     }
+  }
+
+  void fetchSpotlightArtworks() {
+    spotlightArtworksCubit.fetchSpotlightArtworks();
   }
 }
