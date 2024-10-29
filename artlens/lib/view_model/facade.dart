@@ -1,9 +1,11 @@
+import 'package:artlens/view_model/search_cubit.dart';
 import 'package:artlens/view_model/spotlight_artworks_cubit.dart';
 import 'package:artlens/view_model/recommendations_cubit.dart';
 import '../entities/artwork.dart';
 import '../entities/comment.dart';
 import '../entities/user.dart';
 import '../entities/museum.dart';
+import '../model/firestore_service.dart';
 import '../view_model/artwork_cubit.dart';
 import '../view_model/artist_cubit.dart';
 import '../view_model/museum_cubit.dart';
@@ -13,6 +15,8 @@ import '../view_model/comments_cubit.dart';
 import '../view_model/map_cubit.dart';
 import '../model/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'museum_artwork_cubit.dart';
 
 class AppFacade {
   final ArtworkCubit artworkCubit;
@@ -25,21 +29,31 @@ class AppFacade {
   final MapCubit mapCubit;
   final SpotlightArtworksCubit spotlightArtworksCubit;
   final RecommendationsCubit recommendationsCubit;
-
-
-
+  final SearchCubit searchCubit;
+  final MuseumArtworkCubit museumArtworkCubit;
   AppFacade(
-    this.artworkCubit,
-    this.artistCubit,
-    this.commentsCubit,
-    this.museumCubit,
-    this.authCubit,
-    this.favoritesCubit,
-    this.userService,
-    this.mapCubit,
-    this.spotlightArtworksCubit,
-    this.recommendationsCubit,
-  );
+      this.artworkCubit,
+      this.artistCubit,
+      this.commentsCubit,
+      this.museumCubit,
+      this.authCubit,
+      this.favoritesCubit,
+      this.userService,
+      this.mapCubit,
+      this.spotlightArtworksCubit,
+      this.recommendationsCubit,
+      this.searchCubit,
+      this.museumArtworkCubit
+      );
+
+  // Métodos para manejar la búsqueda
+  Future<void> fetchInitialSearchData() async {
+    await searchCubit.fetchAllData();
+  }
+
+  void filterSearchResults(String query) {
+    searchCubit.filterData(query);
+  }
 
   // Authentication
   Future<void> authenticateUser(String username, String password) async {
@@ -126,7 +140,7 @@ class AppFacade {
     recommendationsCubit.fetchRecommendationsByUserId(id);
   }
 
-  // Favorites management (nuevo)
+  // Favorites management
 
   // Obtener los favoritos del usuario
   Future<List<Artwork>> fetchFavorites() async {
@@ -165,9 +179,9 @@ class AppFacade {
       final comments = await commentsCubit.fetchCommentsByArtworkId(artworkId);
       return comments;
     } catch (e) {
-    // Manejo de errores
-    print('Error fetching museums: $e');
-    return [];
+      // Manejo de errores
+      print('Error fetching museums: $e');
+      return [];
     }
   }
 
@@ -207,4 +221,9 @@ class AppFacade {
   void fetchSpotlightArtworks() {
     spotlightArtworksCubit.fetchSpotlightArtworks();
   }
+
+  Future<void> fetchArtworksByMuseumId(int museumId) async {
+    await museumArtworkCubit.fetchArtworksByMuseumId(museumId);
+  }
+
 }

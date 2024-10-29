@@ -3,6 +3,7 @@ import '../routes.dart';
 import '../widgets/custom_button.dart';
 import 'package:artlens/widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
+import '../widgets/fake_search_bar.dart'; // Importar el nuevo widget
 
 class HomeView extends StatefulWidget {
   static final HomeView _instance = HomeView._internal();
@@ -75,6 +76,14 @@ class _HomeViewState extends State<HomeView> {
                         ),
                       ),
                       Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: FakeSearchBar(
+                          onTap: () {
+                            //Navigator.pushNamed(context, Routes.search); // Navegar a la vista de búsqueda
+                          },
+                        ),
+                      ),
+                      Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           "Museums in your city",
@@ -83,7 +92,6 @@ class _HomeViewState extends State<HomeView> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Three custom buttons using the reusable widget
                       CustomButton(
                         label: "View all museums",
                         onPressed: () {
