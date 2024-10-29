@@ -23,13 +23,22 @@ class ArtworkService {
     if (cachedFile != null) {
       // If the file exists in the cache, use it
       final cachedData = await cachedFile.file.readAsString();
-      return Artwork.fromJson(jsonDecode(cachedData));
+      final decodedData = jsonDecode(cachedData);
+
+      // Verifica si es una lista o un mapa
+      if (decodedData is List && decodedData.isNotEmpty) {
+        return Artwork.fromJson(Map<String, dynamic>.from(decodedData[0])); // Toma el primer elemento si es lista
+      } else if (decodedData is Map) {
+        return Artwork.fromJson(Map<String, dynamic>.from(decodedData)); // Usa el mapa directamente
+      } else {
+        throw Exception('Invalid cached data format for artwork');
+      }
     } else {
       // If not in cache, fetch from the network
       final response = await apiAdapter.get('/artworks/$id');
       if (response.statusCode == 200) {
         final List<dynamic> jsonResponse = jsonDecode(response.body);
-        final artwork = Artwork.fromJson(jsonResponse[0]);
+        final artwork = Artwork.fromJson(Map<String, dynamic>.from(jsonResponse[0]));
 
         // Cache the response for future use
         await _cacheManager.putFile(
@@ -44,6 +53,8 @@ class ArtworkService {
       }
     }
   }
+
+
 
   Future<List<Comment>> fetchCommentsByArtworkId(int id) async {
     final response = await apiAdapter.get('/artworks/comments/$id');
@@ -62,6 +73,15 @@ class ArtworkService {
       return jsonData.map((data) => Artwork.fromJson(data)).toList();
     } else {
       throw Exception('Failed to load comments: ${response.reasonPhrase}');
+    }
+  }
+  Future<List<Artwork>> fetchArtworksByMuseumId(int museumId) async {
+    final response = await apiAdapter.get('/artworks/museum/$museumId');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Artwork.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load artworks for museum: ${response.reasonPhrase}');
     }
   }
 

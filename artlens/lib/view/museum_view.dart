@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../routes.dart';
 import '../entities/artwork.dart';
-import '../entities/artist.dart';
+import '../entities/museum.dart';
 import '../view_model/facade.dart';
-import '../view_model/artwork_cubit.dart';
+import '../view_model/museum_artwork_cubit.dart'; // Importar el cubit de museum artworks
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 
@@ -15,30 +15,40 @@ class NoGlowScrollBehavior extends ScrollBehavior {
   }
 }
 
-class ArtistView extends StatefulWidget {
-  final Artist artist;
+class MuseumView extends StatefulWidget {
+  final Museum museum;
   final AppFacade appFacade;
 
-  const ArtistView({
+  const MuseumView({
     Key? key,
-    required this.artist,
+    required this.museum,
     required this.appFacade,
   }) : super(key: key);
 
   @override
-  _ArtistViewState createState() => _ArtistViewState();
+  _MuseumViewState createState() => _MuseumViewState();
 }
 
-class _ArtistViewState extends State<ArtistView> {
+class _MuseumViewState extends State<MuseumView> with RouteAware {
   int _selectedIndex = 1;
 
   @override
   void initState() {
     super.initState();
-    widget.appFacade.fetchArtworksByArtistId(widget.artist.id);
+    _fetchArtworksIfNeeded();
   }
 
-  // Método para manejar la navegación
+  void _fetchArtworksIfNeeded() {
+    print("Fetching artworks for museum in view");
+    widget.appFacade.fetchArtworksByMuseumId(widget.museum.id); // Llama al método de MuseumArtworkCubit
+  }
+
+  @override
+  void didPopNext() {
+    print("Returned to MuseumView, forcing reload of artworks");
+    widget.appFacade.museumArtworkCubit.forceReloadArtworksForMuseum(widget.museum.id);
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -53,11 +63,23 @@ class _ArtistViewState extends State<ArtistView> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    RouteObserver<ModalRoute<void>>().subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    RouteObserver<ModalRoute<void>>().unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: CustomAppBar(title: "ARTIST", showProfileIcon: true,showBackArrow: true),
+      appBar: CustomAppBar(title: "MUSEUM", showProfileIcon: true, showBackArrow: true),
       body: ScrollConfiguration(
         behavior: NoGlowScrollBehavior(),
         child: RawScrollbar(
@@ -69,32 +91,33 @@ class _ArtistViewState extends State<ArtistView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Imagen del artista
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundImage: NetworkImage(widget.artist.image),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16.0),
+                    child: Image.network(
+                      widget.museum.image,
+                      height: 200,
+                      width: 200,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-                // Nombre del artista
                 Text(
-                  widget.artist.name,
+                  widget.museum.name,
                   style: theme.textTheme.displayLarge?.copyWith(color: theme.colorScheme.onPrimary),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: 12),
-                // Biografía del artista
+                const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Text(
-                    widget.artist.biography,
+                    widget.museum.description,
                     style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface),
                     textAlign: TextAlign.justify,
                   ),
                 ),
-                SizedBox(height: 20),
-                // Obras destacadas del artista
+                const SizedBox(height: 20),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Align(
@@ -105,17 +128,23 @@ class _ArtistViewState extends State<ArtistView> {
                     ),
                   ),
                 ),
-                SizedBox(height: 16),
-                BlocBuilder<ArtworkCubit, ArtworkState>(
-                  bloc: widget.appFacade.artworkCubit,
+                const SizedBox(height: 16),
+                BlocBuilder<MuseumArtworkCubit, MuseumArtworkState>(
+                  bloc: widget.appFacade.museumArtworkCubit, // Utiliza el nuevo cubit específico
                   builder: (context, state) {
-                    if (state is ArtworkLoading) {
+                    print("MuseumArtworkCubit state: $state");
+
+                    if (state is MuseumArtworkLoading) {
+                      print("Artwork loading...");
                       return Center(child: CircularProgressIndicator());
-                    } else if (state is ArtworkLoaded) {
-                      return _buildArtworksCarousel(state.artworksByArtistId);
-                    } else if (state is ArtworkError) {
+                    } else if (state is MuseumArtworkLoaded) {
+                      print("Artwork loaded for museum with ${state.artworksByMuseumId.length} artworks");
+                      return _buildArtworksCarousel(state.artworksByMuseumId);
+                    } else if (state is MuseumArtworkError) {
+                      print("Artwork error: ${state.message}");
                       return Center(child: Text('Error loading artworks: ${state.message}'));
                     } else {
+                      print("No artworks available state encountered");
                       return Center(child: Text('No artworks available.'));
                     }
                   },
@@ -134,8 +163,10 @@ class _ArtistViewState extends State<ArtistView> {
 
   Widget _buildArtworksCarousel(List<Artwork>? artworks) {
     if (artworks == null || artworks.isEmpty) {
+      print("No artworks found to display in carousel.");
       return Center(child: Text('No artworks available.'));
     }
+    print("Displaying artworks carousel with ${artworks.length} items.");
     return SizedBox(
       height: 200,
       child: ListView.builder(
@@ -145,8 +176,6 @@ class _ArtistViewState extends State<ArtistView> {
           final artwork = artworks[index];
           return GestureDetector(
             onTap: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
               Navigator.pushNamed(
                 context,
                 Routes.artwork,
@@ -166,7 +195,7 @@ class _ArtistViewState extends State<ArtistView> {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     artwork.name,
                     style: TextStyle(

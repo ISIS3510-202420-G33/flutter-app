@@ -1,3 +1,5 @@
+import 'package:artlens/view_model/museum_artwork_cubit.dart';
+import 'package:artlens/view_model/search_cubit.dart';
 import 'package:artlens/view_model/spotlight_artworks_cubit.dart';
 import 'package:artlens/view_model/recommendations_cubit.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +27,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'entities/artwork.dart';
 import 'firebase_options.dart';
+import 'model/search_service.dart';
 
 /// Inicializar un RouteObserver para seguir las rutas
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
@@ -57,7 +60,8 @@ void main() async {
   final mapCubit = MapCubit(MapService());
   final spotlightArtworksCubit = SpotlightArtworksCubit(AnalyticEngineService());
   final recommendationsCubit = RecommendationsCubit(AnalyticEngineService());
-
+  final searchCubit=SearchCubit(SearchService());
+  final museumArtworkCubit = MuseumArtworkCubit(ArtworkService());
 
 
   final appFacade = AppFacade(
@@ -70,7 +74,10 @@ void main() async {
     userService,
     mapCubit,
     spotlightArtworksCubit,
-    recommendationsCubit
+    recommendationsCubit,
+    searchCubit,
+    museumArtworkCubit,
+
   );
 
   // Load saved session, if any
@@ -85,7 +92,8 @@ void main() async {
         BlocProvider(create: (_) => museumCubit),
         BlocProvider(create: (_) => authCubit),
         BlocProvider(create: (_) => favoritesCubit),
-        BlocProvider(create: (_) => mapCubit)
+        BlocProvider(create: (_) => mapCubit),
+        BlocProvider(create: (_) => searchCubit)
       ],
       child: ArtLensApp(appFacade: appFacade),
     ),
