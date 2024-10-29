@@ -155,7 +155,7 @@ class _TrendingViewState extends State<TrendingView> {
                             // Section for User-based Recommendations
                             if (recommendationsByUserId.isNotEmpty) ...[
                               Text(
-                                'Based on your favorites',
+                                'Based on your favoritess',
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,

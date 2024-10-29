@@ -54,8 +54,6 @@ class ArtworkService {
     }
   }
 
-
-
   Future<List<Comment>> fetchCommentsByArtworkId(int id) async {
     final response = await apiAdapter.get('/artworks/comments/$id');
     if (response.statusCode == 200) {
@@ -75,6 +73,7 @@ class ArtworkService {
       throw Exception('Failed to load comments: ${response.reasonPhrase}');
     }
   }
+
   Future<List<Artwork>> fetchArtworksByMuseumId(int museumId) async {
     final response = await apiAdapter.get('/artworks/museum/$museumId');
     if (response.statusCode == 200) {
@@ -82,6 +81,16 @@ class ArtworkService {
       return jsonData.map((data) => Artwork.fromJson(data)).toList();
     } else {
       throw Exception('Failed to load artworks for museum: ${response.reasonPhrase}');
+    }
+  }
+
+  Future<List<Artwork>> fetchAllArtworks() async {
+    final response = await apiAdapter.get('/artworks');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Artwork.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load artworks: ${response.reasonPhrase}');
     }
   }
 

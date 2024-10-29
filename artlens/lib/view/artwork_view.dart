@@ -10,7 +10,6 @@ import '../widgets/custom_app_bar.dart';
 import '../main.dart'; // Para usar el `RouteObserver`
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'artist_view.dart';
 
 class ArtworkView extends StatefulWidget {

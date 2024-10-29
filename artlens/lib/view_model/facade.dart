@@ -31,6 +31,7 @@ class AppFacade {
   final RecommendationsCubit recommendationsCubit;
   final SearchCubit searchCubit;
   final MuseumArtworkCubit museumArtworkCubit;
+
   AppFacade(
       this.artworkCubit,
       this.artistCubit,
@@ -47,8 +48,8 @@ class AppFacade {
       );
 
   // Métodos para manejar la búsqueda
-  Future<void> fetchInitialSearchData() async {
-    await searchCubit.fetchAllData();
+  void fetchInitialSearchData() {
+    searchCubit.fetchAllData();
   }
 
   void filterSearchResults(String query) {
@@ -126,9 +127,17 @@ class AppFacade {
     artworkCubit.fetchArtworkById(id);
   }
 
+  void fetchArtworksByMuseumId(int museumId) {
+    museumArtworkCubit.fetchArtworksByMuseumId(museumId);
+  }
+
   // Artist management
   void fetchArtistById(int id) {
     artistCubit.fetchArtistById(id);
+  }
+
+  void fetchAllArtists() {
+    artistCubit.fetchArtists();
   }
 
   // Museum management
@@ -136,8 +145,8 @@ class AppFacade {
     museumCubit.fetchMuseumById(id);
   }
 
-  void fetchRecommendationsByUserId(int id) {
-    recommendationsCubit.fetchRecommendationsByUserId(id);
+  void fetchAllMuseums() {
+    museumCubit.fetchMuseums();
   }
 
   // Favorites management
@@ -218,12 +227,13 @@ class AppFacade {
     }
   }
 
-  void fetchSpotlightArtworks() {
-    spotlightArtworksCubit.fetchSpotlightArtworks();
+  // Analytic engine
+  void fetchRecommendationsByUserId(int id) {
+    recommendationsCubit.fetchRecommendationsByUserId(id);
   }
 
-  Future<void> fetchArtworksByMuseumId(int museumId) async {
-    await museumArtworkCubit.fetchArtworksByMuseumId(museumId);
+  void fetchSpotlightArtworks() {
+    spotlightArtworksCubit.fetchSpotlightArtworks();
   }
 
 }

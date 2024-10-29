@@ -1,8 +1,10 @@
+import 'package:artlens/model/artist_service.dart';
+import 'package:artlens/model/artwork_service.dart';
 import 'package:bloc/bloc.dart';
 import '../entities/artwork.dart';
 import '../entities/artist.dart';
 import '../entities/museum.dart';
-import '../model/search_service.dart';
+import '../model/museum_service.dart';
 
 abstract class SearchState {}
 
@@ -33,19 +35,21 @@ class SearchError extends SearchState {
 }
 
 class SearchCubit extends Cubit<SearchState> {
-  final SearchService searchService;
+  final ArtworkService artworkService;
+  final MuseumService museumService;
+  final ArtistService artistService;
   List<Artwork> _allArtworks = [];
   List<Artist> _allArtists = [];
   List<Museum> _allMuseums = [];
 
-  SearchCubit(this.searchService) : super(SearchInitial());
+  SearchCubit(this.artworkService, this.museumService, this.artistService) : super(SearchInitial());
 
   Future<void> fetchAllData() async {
     emit(SearchLoading());
     try {
-      _allArtworks = await searchService.fetchAllArtworks();
-      _allArtists = await searchService.fetchAllArtists();
-      _allMuseums = await searchService.fetchAllMuseums();
+      _allArtworks = await artworkService.fetchAllArtworks();
+      _allArtists = await artistService.fetchAllArtists();
+      _allMuseums = await museumService.fetchAllMuseums();
       emit(SearchLoaded(artworks: _allArtworks, artists: _allArtists, museums: _allMuseums));
     } catch (e) {
       emit(SearchError('Error fetching data: ${e.toString()}'));

@@ -95,13 +95,15 @@ class _HomeViewState extends State<HomeView> {
                       CustomButton(
                         label: "View all museums",
                         onPressed: () {
-                          // Define button action
+                          Navigator.pushNamed(
+                            context,
+                            Routes.museums,
+                          );
                         },
                       ),
                       CustomButton(
                         label: "View Map",
                         onPressed: () {
-                          // Navigate to the map view
                           Navigator.pushNamed(
                             context,
                             Routes.map,
@@ -111,7 +113,10 @@ class _HomeViewState extends State<HomeView> {
                       CustomButton(
                         label: "View Artists",
                         onPressed: () {
-                          // Define button action
+                          Navigator.pushNamed(
+                            context,
+                            Routes.artists,
+                          );
                         },
                       ),
                     ],
