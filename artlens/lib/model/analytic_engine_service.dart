@@ -33,7 +33,7 @@ class AnalyticEngineService {
     }
 
     // Fetch from the backend if local data is outdated
-    final response = await apiAdapter.get('/analytic_engine/promoted/');
+    final response = await apiAdapter.get('/analytic_engine/spotlights/');
     if (response.statusCode == 200) {
       List<dynamic> jsonData = jsonDecode(response.body);
       List<Artwork> artworks = jsonData.map((data) => Artwork.fromJson(data)).toList();
@@ -47,7 +47,6 @@ class AnalyticEngineService {
     }
   }
 
-  // Check if local data should be used (within the 5-day period)
   bool _shouldUseLocalData() {
     // Retrieve the last refresh date from the metadata box
     final lastRefreshDateStr = _metadataBox.get('lastRefreshDate');

@@ -3,11 +3,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import '../model/firestore_service.dart';
 import '../routes.dart';
+import '../view_model/comments_cubit.dart';
 import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
+import '../view_model/favorites_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
-import '../main.dart'; // Para usar el `RouteObserver`
+import '../main.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'artist_view.dart';
@@ -30,15 +32,13 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   int? _artworkId;
   String? _documentId;
   int _selectedIndex = 1;
-  bool _isLiked = false;
   bool _isForumOpen = false;
-  bool _isPlaying = false; // Controlar si el TTS está reproduciendo
-  bool _isLoading = true; // Controlar el estado de carga de la obra de arte
-  bool _isCommentsLoading = false; // Controlar el estado de carga de comentarios
+  bool _isPlaying = false;
+  bool _isLoading = true;
+
   final TextEditingController _commentController = TextEditingController();
-  final FlutterTts flutterTts = FlutterTts(); // Instancia de FlutterTTS
-  final FirestoreService _firestoreService = FirestoreService(); // Instancia del servicio Firestore
-  List<Map<String, String>> _commentsWithUsernames = [];
+  final FlutterTts flutterTts = FlutterTts();
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
@@ -80,35 +80,29 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     routeObserver.subscribe(this, ModalRoute.of(context)!);
   }
 
-  Future<void> _initializeArtwork() async {
+  void _initializeArtwork() {
     setState(() {
       _isLoading = true;
     });
-    final favorites = await widget.appFacade.fetchFavorites();  // Trae las obras favoritas
-    _checkIfLiked(favorites);  // Verifica si la obra está "likeada"
-    widget.appFacade.fetchArtworkAndRelatedEntities(widget.id); // Vuelve a cargar la obra de arte
+    widget.appFacade.fetchArtworkAndRelatedEntities(widget.id);
+    widget.appFacade.fetchCommentsByArtworkId(widget.id);
+    widget.appFacade.isArtworkLiked(widget.id);
     setState(() {
       _isLoading = false;
     });
   }
 
-  void _checkIfLiked(favorites) {
-    _isLiked = favorites.any((artwork) => artwork.id == _artworkId);
-    setState(() {});
-  }
-
   @override
   void dispose() {
-    // Desregistrar la vista para detener las notificaciones de rutas
-    routeObserver.unsubscribe(this); // Ajustar con `RouteObserver`
-    flutterTts.stop();  // Asegúrate de detener cualquier narración en progreso
+    routeObserver.unsubscribe(this);
+    flutterTts.stop();
     super.dispose();
   }
 
   @override
   void didPopNext() {
-    _initializeArtwork();  // Vuelve a cargar los datos de la obra de arte cuando se regresa
     super.didPopNext();
+    _initializeArtwork();
   }
 
   // Método para manejar la navegación
@@ -125,55 +119,36 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     });
   }
 
-  Future<void> _onLikePressed() async {
+  void _onLikePressed(bool currentLikedStatus) async {
     try {
-      if (_isLiked) {
+      if (currentLikedStatus) {
         await widget.appFacade.removeFavorite(_artworkId!);
-        setState(() {
-          _isLiked = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Unliked')),
-        );
       } else {
         await widget.appFacade.addFavorite(_artworkId!);
-        setState(() {
-          _isLiked = true;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Like added'),
-            backgroundColor: Theme.of(context).colorScheme.secondary,
-          ),
-        );
       }
+
+      // Re-fetch or update the state to reflect the change
+      widget.appFacade.isArtworkLiked(widget.id);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al actualizar el like')),
+        SnackBar(content: Text('Error updating like status')),
       );
     }
   }
 
-  void _toggleForum() async {
-    setState(() {
-      _isForumOpen = !_isForumOpen;
+  void openForum() async {
+    DateTime date = DateTime.now();
+    int action = 1;
+    final prefs = await SharedPreferences.getInstance();
+    final username =  prefs.getString('userName');
+    await _firestoreService.addDocument('BQ31', {
+      'Usuario': username,
+      'Fecha': date,
+      'Accion': action,
     });
-    // Si el foro se abrió, cargar los comentarios
-    if (_isForumOpen) {
-      await _loadComments();
-      DateTime date = DateTime.now();
-      int action = 1;
-      final prefs = await SharedPreferences.getInstance();
-      final username =  prefs.getString('userName');
-      await _firestoreService.addDocument('BQ31', {
-        'Usuario': username,
-        'Fecha': date,
-        'Accion': action,
-      });
-    }
   }
 
-  Future<void> _submitComment() async {
+  void _submitComment() async {
     if (_commentController.text.isNotEmpty) {
       String content = _commentController.text;
       String date = DateFormat('yyyy-MM-dd').format(DateTime.now());
@@ -187,45 +162,11 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
         'Fecha': date2,
         'Accion': action,
       });
-      // Postear el comentario
-      await widget.appFacade.postComment(content, date, _artworkId!);
 
-      // Limpiar el campo del comentario
+      widget.appFacade.postComment(content, date, _artworkId!);
+
       _commentController.clear();
-
-      // Forzar la recarga completa de la vista
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ArtworkView(
-            id: _artworkId!,
-            appFacade: widget.appFacade,
-          ),
-        ),
-      );
     }
-  }
-
-  Future<void> _loadComments() async {
-    setState(() {
-      _isCommentsLoading = true; // Mostrar el spinner de carga
-    });
-
-    // Cargar los comentarios
-    final comments = await widget.appFacade.fetchCommentsByArtworkId(_artworkId!);
-    List<Map<String, String>> commentsWithUsernames = [];
-    for (var comment in comments) {
-      final username  = await widget.appFacade.getUsername(comment.user);
-      _commentsWithUsernames.add({
-        'username': username ?? 'Unknown User', // Si no hay username, mostrar 'Unknown User'
-        'content': comment.content,
-      });
-    }
-    // Actualizar el estado para mostrar los comentarios con usernames
-    setState(() {
-      _commentsWithUsernames = commentsWithUsernames;
-      _isCommentsLoading = false;
-    });
   }
 
   Future<void> _startTTS(String text) async {
@@ -252,17 +193,11 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     }
   }
 
-
   Future<void> _stopTTS() async {
     await flutterTts.stop();
     setState(() {
       _isPlaying = false;
     });
-  }
-
-  // Método para obtener el nombre de usuario por ID
-  Future<String?> _getUsername(int userId) async {
-    return await widget.appFacade.getUsername(userId);
   }
 
   @override
@@ -313,18 +248,31 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                               ),
                             ),
                             if (widget.appFacade.isLoggedIn())
-                              IconButton(
-                                icon: Container(
-                                  padding: const EdgeInsets.all(8.0),
-                                  decoration: BoxDecoration(
-                                    color: _isLiked ? theme.colorScheme.secondary : Colors.black,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Center(
-                                    child: Icon(Icons.star, color: Colors.white),
-                                  ),
-                                ),
-                                onPressed: _onLikePressed,
+                              BlocBuilder<FavoritesCubit, FavoritesState>(
+                                bloc: widget.appFacade.favoritesCubit,
+                                builder: (context, likeState) {
+                                  bool isLiked = false;
+                                  if (likeState is IsLikedLoaded) {
+                                    isLiked = likeState.isLiked;
+                                  }
+                                  return IconButton(
+                                    icon: Container(
+                                      padding: const EdgeInsets.all(8.0),
+                                      decoration: BoxDecoration(
+                                        color: isLiked
+                                            ? theme.colorScheme.secondary
+                                            : Colors.black,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Center(
+                                        child: Icon(Icons.star, color: Colors.white),
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      _onLikePressed(isLiked);
+                                    },
+                                  );
+                                },
                               ),
                           ],
                         ),
@@ -363,18 +311,13 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            onPressed: () async {
+                            onPressed: () {
                               if (artist != null) {
-                                await Navigator.pushNamed(
+                                Navigator.pushNamed(
                                   context,
                                   Routes.artist,
                                   arguments: {'artist': artist},
                                 );
-                                if (_artworkId != null) {
-                                  final favorites = await widget.appFacade.fetchFavorites();
-                                  _checkIfLiked(favorites);
-                                  widget.appFacade.fetchArtworkAndRelatedEntities(_artworkId!);
-                                }
                               } else {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(content: Text('Artist details are not available')),
@@ -441,7 +384,12 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            onPressed: _toggleForum,
+                            onPressed: () {
+                              openForum();
+                              setState(() {
+                                _isForumOpen = !_isForumOpen;
+                              });
+                            },
                             child: Text(
                               _isForumOpen ? "Close Forum" : "Open Forum",
                               style: const TextStyle(color: Colors.white, fontSize: 18),
@@ -449,95 +397,101 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                           ),
                         ),
                       ),
-                      if (_isForumOpen) ...[
+                      if (_isForumOpen)
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (widget.appFacade.isLoggedIn()) ...[
-                                TextField(
-                                  controller: _commentController,
-                                  cursorColor: Colors.black, // Color del cursor
-                                  decoration: InputDecoration(
-                                    filled: true, // Asegura que el fondo del campo esté relleno
-                                    fillColor: Colors.grey[200], // Color de fondo del campo
-                                    focusedBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.black), // Color del borde cuando está seleccionado
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.black), // Color del borde cuando no está seleccionado
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    hintText: 'Write your comment...',
-                                  ),
-                                  style: TextStyle(color: Colors.black), // Asegura que el texto sea visible
-                                  maxLines: 2,
-                                ),
-                                const SizedBox(height: 8),
-                                SizedBox(
-                                  width: 150,
-                                  height: 35,
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.black, // Color de fondo del botón
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                          child: BlocBuilder<CommentsCubit, CommentsState>(
+                            bloc: widget.appFacade.commentsCubit,
+                            builder: (context, commentState) {
+                              if (commentState is CommentsLoading) {
+                                return Center(child: CircularProgressIndicator());
+                              } else if (commentState is CommentsLoaded) {
+                                final comments = commentState.comments ?? [];
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (widget.appFacade.isLoggedIn()) ...[
+                                      TextField(
+                                        controller: _commentController,
+                                        cursorColor: Colors.black,
+                                        decoration: InputDecoration(
+                                          filled: true,
+                                          fillColor: Colors.grey[200],
+                                          focusedBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          enabledBorder: OutlineInputBorder(
+                                            borderSide: BorderSide(color: Colors.black),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          hintText: 'Write your comment...',
+                                        ),
+                                        style: TextStyle(color: Colors.black),
+                                        maxLines: 2,
                                       ),
-                                    ),
-                                    onPressed: _submitComment,
-                                    child: const Text(
-                                      "Submit",
-                                      style: TextStyle(color: Colors.white, fontSize: 14), // Color del texto del botón
-                                    ),
-                                  ),
-                                ),
-                              ],
-                              const SizedBox(height: 16),
-                              // Mostrar un spinner si los comentarios están cargando
-                              _isCommentsLoading
-                                  ? Center(child: CircularProgressIndicator())
-                                  : ListView.builder(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: state.comments?.length ?? 0,
-                                itemBuilder: (context, index) {
-                                  final comment = state.comments![index];
-                                  return FutureBuilder<String?>(
-                                    future: _getUsername(comment.user),
-                                    builder: (context, snapshot) {
-                                      final username = snapshot.data ?? 'Unknown User';
-                                      final usernameColor = theme.colorScheme.secondary;
-                                      return ListTile(
-                                        title: RichText(
-                                          text: TextSpan(
-                                            children: [
-                                              TextSpan(
-                                                text: '$username: ',
-                                                style: TextStyle(
-                                                  color: usernameColor,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              TextSpan(
-                                                text: comment.content,
-                                                style: theme.textTheme.bodyMedium?.copyWith(
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ],
+                                      const SizedBox(height: 8),
+                                      SizedBox(
+                                        width: 150,
+                                        height: 35,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.black,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          onPressed: _submitComment,
+                                          child: const Text(
+                                            "Submit",
+                                            style: TextStyle(color: Colors.white, fontSize: 14),
                                           ),
                                         ),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ],
+                                      ),
+                                    ],
+                                    const SizedBox(height: 16),
+                                    ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(),
+                                      itemCount: comments.length,
+                                      itemBuilder: (context, index) {
+                                        final comment = comments[index];
+                                        final username = commentState.username ?? 'Unknown User';
+                                        final usernameColor = theme.colorScheme.secondary;
+
+                                        return ListTile(
+                                          title: RichText(
+                                            text: TextSpan(
+                                              children: [
+                                                TextSpan(
+                                                  text: '$username: ',
+                                                  style: TextStyle(
+                                                    color: usernameColor,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                TextSpan(
+                                                  text: comment.content,
+                                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                                    color: Colors.black,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                );
+                              } else if (commentState is CommentsError) {
+                                return Center(child: Text('Error: ${commentState.message}'));
+                              } else {
+                                return Center(child: const Text("No comments available."));
+                              }
+                            },
                           ),
                         ),
-                      ],
                     ],
                   ),
                 ),
@@ -556,4 +510,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
       ),
     );
   }
+
+
+
 }
