@@ -14,10 +14,16 @@ class MuseumLoaded extends MuseumState {
   MuseumLoaded(this.museum);
 }
 
-class MuseumError extends MuseumState {
+class MuseumsLoaded extends MuseumState {
+  final List<Museum> museums;
+
+  MuseumsLoaded(this.museums);
+}
+
+class Error extends MuseumState {
   final String message;
 
-  MuseumError(this.message);
+  Error(this.message);
 }
 
 class MuseumCubit extends Cubit<MuseumState> {
@@ -31,7 +37,17 @@ class MuseumCubit extends Cubit<MuseumState> {
       final museum = await museumService.fetchMuseumById(id);
       emit(MuseumLoaded(museum));
     } catch (e) {
-      emit(MuseumError('Error fetching museum: ${e.toString()}'));
+      emit(Error('Error fetching museum: ${e.toString()}'));
+    }
+  }
+
+  Future<void> fetchMuseums() async {
+    try {
+      emit(MuseumLoading());
+      final museums = await museumService.fetchAllMuseums();
+      emit(MuseumsLoaded(museums));
+    } catch (e) {
+      emit(Error('Error fetching museums: ${e.toString()}'));
     }
   }
 }

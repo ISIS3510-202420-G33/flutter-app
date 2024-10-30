@@ -14,10 +14,16 @@ class ArtistLoaded extends ArtistState {
   ArtistLoaded(this.artist);
 }
 
-class ArtistError extends ArtistState {
+class ArtistsLoaded extends ArtistState {
+  final List<Artist> artists;
+
+  ArtistsLoaded(this.artists);
+}
+
+class Error extends ArtistState {
   final String message;
 
-  ArtistError(this.message);
+  Error(this.message);
 }
 
 class ArtistCubit extends Cubit<ArtistState> {
@@ -31,7 +37,17 @@ class ArtistCubit extends Cubit<ArtistState> {
       final artist = await artistService.fetchArtistById(id);
       emit(ArtistLoaded(artist));
     } catch (e) {
-      emit(ArtistError('Error fetching artist: ${e.toString()}'));
+      emit(Error('Error fetching artist: ${e.toString()}'));
+    }
+  }
+
+  Future<void> fetchArtists() async {
+    try {
+      emit(ArtistLoading());
+      final museums = await artistService.fetchAllArtists();
+      emit(ArtistsLoaded(museums));
+    } catch (e) {
+      emit(Error('Error fetching artists: ${e.toString()}'));
     }
   }
 }

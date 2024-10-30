@@ -1,3 +1,5 @@
+import 'package:artlens/view/artists_view.dart';
+import 'package:artlens/view/museums_view.dart';
 import 'package:flutter/material.dart';
 import 'package:artlens/view/artwork_view.dart';
 import 'package:artlens/view/artist_view.dart';
@@ -19,6 +21,7 @@ class Routes {
   static const String artwork = '/artwork';
   static const String camera = '/camera';
   static const String artist = '/artist';
+  static const String artists = '/artists';
   static const String map = '/map';
   static const String signUp = '/signUp';
   static const String favorites = '/favorites';
@@ -26,6 +29,7 @@ class Routes {
   static const String logIn = '/logIn';
   static const String searchResults = '/searchResults';
   static const String museum = '/museum';
+  static const String museums = '/museums';
 
   static Route<dynamic> generateRoute(RouteSettings settings, AppFacade appFacade) {
     switch (settings.name) {
@@ -44,7 +48,8 @@ class Routes {
 
       case camera:
         return MaterialPageRoute(builder: (_) => CameraPreviewScreen());
-      case museum:
+
+        case museum:
         if (settings.arguments is Map<String, dynamic>) {
           final args = settings.arguments as Map<String, dynamic>;
           final museum = args['museum'];
@@ -53,6 +58,9 @@ class Routes {
           );
         }
         return _errorRoute(settings.name);
+
+      case museums:
+        return MaterialPageRoute(builder: (_) => MuseumsView(appFacade: appFacade));
 
       case artist:
         if (settings.arguments is Map<String, dynamic>) {
@@ -63,6 +71,9 @@ class Routes {
           );
         }
         return _errorRoute(settings.name);
+
+      case artists:
+        return MaterialPageRoute(builder: (_) => ArtistsView(appFacade: appFacade));
 
       case map:
         return MaterialPageRoute(builder: (_) => MapView(appFacade: appFacade));

@@ -26,13 +26,13 @@ class MuseumArtworkCubit extends Cubit<MuseumArtworkState> {
   final Map<int, List<Artwork>> cachedArtworksByMuseum = {};
 
   MuseumArtworkCubit(this.artworkService) : super(MuseumArtworkInitial());
+
   void forceReloadArtworksForMuseum(int museumId) {
     if (cachedArtworksByMuseum.containsKey(museumId)) {
       print("Forcing reload of artworks for museum ID: $museumId");
       emit(MuseumArtworkLoaded(cachedArtworksByMuseum[museumId]!));
     }
   }
-
 
   Future<void> fetchArtworksByMuseumId(int museumId) async {
     print("Fetching artworks for museum ID: $museumId");

@@ -27,7 +27,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'entities/artwork.dart';
 import 'firebase_options.dart';
-import 'model/search_service.dart';
 
 /// Inicializar un RouteObserver para seguir las rutas
 final RouteObserver<ModalRoute<void>> routeObserver = RouteObserver<ModalRoute<void>>();
@@ -60,7 +59,7 @@ void main() async {
   final mapCubit = MapCubit(MapService());
   final spotlightArtworksCubit = SpotlightArtworksCubit(AnalyticEngineService());
   final recommendationsCubit = RecommendationsCubit(AnalyticEngineService());
-  final searchCubit=SearchCubit(SearchService());
+  final searchCubit=SearchCubit(ArtworkService(), MuseumService(), ArtistService());
   final museumArtworkCubit = MuseumArtworkCubit(ArtworkService());
 
 

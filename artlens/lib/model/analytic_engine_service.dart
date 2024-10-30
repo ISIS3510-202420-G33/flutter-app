@@ -29,7 +29,6 @@ class AnalyticEngineService {
   Future<List<Artwork>> fetchSpotlightArtworks() async {
     // Check if the data is locally available and fresh
     if (_shouldUseLocalData()) {
-      print("hive");
       return _spotlightArtworksBox.values.toList();
     }
 
