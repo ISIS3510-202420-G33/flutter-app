@@ -1,14 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
-import '../entities/artwork.dart';
-import '../model/artwork_service.dart';
 import '../routes.dart';
 import '../widgets/custom_app_bar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../model/firestore_service.dart';
-import '../view_model/facade.dart';
-
-
 
 class CameraPreviewScreen extends StatefulWidget {
   @override
@@ -20,9 +13,6 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
   Barcode? result;
   QRViewController? qrController;
   bool hasNavigated = false;
-  final FirestoreService _firestoreService = FirestoreService(); // Instancia del servicio Firestore
-  late final ArtworkService artworkService;
-
 
   @override
   void dispose() {
@@ -67,24 +57,12 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
     });
 
     controller.scannedDataStream.listen((scanData) {
-      setState(() async {
+      setState(() {
         result = scanData;
         if (result != null && !hasNavigated) {
           try {
             int id = int.parse(result!.code!);
             hasNavigated = true;
-
-            final prefs = await SharedPreferences.getInstance();
-            final username =  prefs.getString('userName');
-            DateTime date = DateTime.now();
-            Artwork artwork = artworkService.fetchArtworkById(id) as Artwork;
-            final museum = artwork.museum;
-            await _firestoreService.addDocument('BQ43', {
-              'Usuario': username,
-              'Fecha': date,
-              'Museo': museum,
-            });
-
 
             // Once the QR code is scanned, navigate to ArtworkView and pass the ID
             Navigator.pushNamed(
