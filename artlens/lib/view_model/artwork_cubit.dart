@@ -8,6 +8,7 @@ import '../model/artwork_service.dart';
 import '../model/artist_service.dart';
 import '../model/museum_service.dart';
 import '../model/firestore_service.dart';
+import '../model/user_service.dart';
 
 abstract class ArtworkState {}
 
@@ -19,14 +20,12 @@ class ArtworkLoaded extends ArtworkState {
   final Artwork? artwork;
   final Artist? artist;
   final Museum? museum;
-  final List<Comment>? comments;
   final List<Artwork>? artworksByArtistId;
 
   ArtworkLoaded({
     this.artwork,
     this.artist,
     this.museum,
-    this.comments,
     this.artworksByArtistId,
   });
 }
@@ -91,22 +90,18 @@ class ArtworkCubit extends Cubit<ArtworkState> {
     cachedArtworksByArtist.clear();
   }
 
-  Future<void> fetchArtworkAndRelatedEntities(int id) async {
+  Future<void> fetchArtworkAndRelatedEntities(int artworkId) async {
     emit(ArtworkLoading());
     try {
-      final artwork = await artworkService.fetchArtworkById(id);
+      final artwork = await artworkService.fetchArtworkById(artworkId);
       final artist = await artistService.fetchArtistById(artwork.artist);
       final museum = await museumService.fetchMuseumById(artwork.museum);
-      final comments = await artworkService.fetchCommentsByArtworkId(id);
-      print("Fetched artwork, artist, museum, and comments for artwork ID: $id");
       emit(ArtworkLoaded(
         artwork: artwork,
         artist: artist,
         museum: museum,
-        comments: comments,
       ));
     } catch (e) {
-      print("Error fetching artwork and related entities: ${e.toString()}");
       emit(ArtworkError('Error fetching artwork and related entities: ${e.toString()}'));
     }
   }

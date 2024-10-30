@@ -29,26 +29,12 @@ class FavoritesView extends StatefulWidget {
 
 class _FavoritesViewState extends State<FavoritesView> {
   int _selectedIndex = 2;
-  int? userId;
   Map<int, bool> isPressed = {}; // Map para controlar qué íconos han sido presionados
 
   @override
   void initState() {
     super.initState();
-    _loadUserId(); // Carga el userId desde SharedPreferences y luego obtiene los favoritos
-  }
-
-  // Carga el userId desde SharedPreferences
-  Future<void> _loadUserId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userId = prefs.getInt('userId');
-    });
-
-    if (userId != null) {
-      widget.appFacade.fetchFavorites();
-    }
-  }
+    widget.appFacade.fetchFavorites();  }
 
   // Método para manejar la navegación de la barra inferior
   void _onItemTapped(int index) {
@@ -84,117 +70,114 @@ class _FavoritesViewState extends State<FavoritesView> {
 
   @override
   Widget build(BuildContext context) {
-    final favoritesCubit = context.read<FavoritesCubit>();
-
     return Scaffold(
       appBar: CustomAppBar(title: "FAVORITES", showProfileIcon: false),
       body: BlocBuilder<FavoritesCubit, FavoritesState>(
         builder: (context, state) {
-          if (state.isLoading) {
+          if (state is FavoritesLoading) {
             return Center(child: CircularProgressIndicator());
           }
 
-          if (state.error != null) {
-            return Center(child: Text('Error loading favorites: ${state.error}'));
+          if (state is Error) {
+            return Center(child: Text('Error loading favorites: ${state.message}'));
           }
 
-          if (state.favorites.isEmpty) {
+          if (state is FavoritesLoaded && state.favorites.isEmpty) {
             return Center(child: Text('No favorites found.'));
           }
 
-          return ScrollConfiguration(
-            behavior: NoGlowScrollBehavior(),
-            child: RawScrollbar(
-              thumbVisibility: true,
-              thickness: 6.0,
-              radius: const Radius.circular(15),
-              thumbColor: Theme.of(context).colorScheme.secondary,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-                itemCount: state.favorites.length,
-                itemBuilder: (context, index) {
-                  final Artwork artwork = state.favorites[index];
-                  bool iconPressed = isPressed[artwork.id] ?? false;
+          if (state is FavoritesLoaded) {
+            return ScrollConfiguration(
+              behavior: NoGlowScrollBehavior(),
+              child: RawScrollbar(
+                thumbVisibility: true,
+                thickness: 6.0,
+                radius: const Radius.circular(15),
+                thumbColor: Theme.of(context).colorScheme.secondary,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
+                  itemCount: state.favorites.length,
+                  itemBuilder: (context, index) {
+                    final Artwork artwork = state.favorites[index];
+                    bool iconPressed = isPressed[artwork.id] ?? false;
 
-                  return GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        Routes.artwork,
-                        arguments: {'id': artwork.id},
-                      );
-                    },
-                    child: Column(
-                      children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,  // Centrar verticalmente todo el contenido de la fila
-                          children: [
-                            // Imagen centrada verticalmente
-                            Image.network(
-                              artwork.image,
-                              height: 100,
-                              width: 100,
-                              fit: BoxFit.cover,
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    artwork.name,
-                                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  // Aquí se trunca el texto de la interpretación
-                                  Text(
-                                    _truncateWords(artwork.interpretation, 20), // Puedes ajustar el límite de palabras
-                                    style: const TextStyle(fontSize: 14),
-                                  ),
-                                ],
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          Routes.artwork,
+                          arguments: {'id': artwork.id},
+                        );
+                      },
+                      child: Column(
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,  // Center all row content vertically
+                            children: [
+                              Image.network(
+                                artwork.image,
+                                height: 100,
+                                width: 100,
+                                fit: BoxFit.cover,
                               ),
-                            ),
-                            // Icono de eliminación con efecto de color al ser presionado
-                            InkWell(
-                              onTap: () async {
-                                // Cambiar el estado del icono a "presionado"
-                                setState(() {
-                                  isPressed[artwork.id] = true;
-                                });
-
-                                // Espera medio segundo antes de ejecutar la eliminación y restaurar el color
-                                await Future.delayed(const Duration(milliseconds: 500));
-
-                                if (userId != null) {
-                                  favoritesCubit.removeFavorite(userId!, artwork.id);
-                                }
-
-                                // Restaurar el estado del icono a "no presionado"
-                                setState(() {
-                                  isPressed[artwork.id] = false;
-                                });
-                              },
-                              child: Icon(
-                                Icons.delete,
-                                color: iconPressed
-                                    ? Theme.of(context).colorScheme.secondary // Cambia a naranja cuando se presiona
-                                    : Colors.black, // Color original
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      artwork.name,
+                                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    // Truncate the interpretation text here
+                                    Text(
+                                      _truncateWords(artwork.interpretation, 20), // Adjust word limit as needed
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                        const Divider(thickness: 1, height: 32),
-                      ],
-                    ),
-                  );
-                },
+                              InkWell(
+                                onTap: () async {
+                                  setState(() {
+                                    isPressed[artwork.id] = true;
+                                  });
+
+                                  // Short delay before executing delete and restoring color
+                                  await Future.delayed(const Duration(milliseconds: 500));
+
+                                  widget.appFacade.removeFavorite(artwork.id);
+
+                                  // Restore the icon's color state
+                                  setState(() {
+                                    isPressed[artwork.id] = false;
+                                  });
+                                },
+                                child: Icon(
+                                  Icons.delete,
+                                  color: iconPressed
+                                      ? Theme.of(context).colorScheme.secondary // Change to secondary color when pressed
+                                      : Colors.black, // Original color
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(thickness: 1, height: 32),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          );
+            );
+          }
+
+          return Center(child: const Text('No favorites available.'));
         },
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        selectedIndex: _selectedIndex, // Aquí manejamos el índice seleccionado, comenzando con 2 para favoritos
+        selectedIndex: _selectedIndex, // Start with index 2 for favorites
         onItemTapped: _onItemTapped,
       ),
     );

@@ -2,58 +2,74 @@ import 'package:bloc/bloc.dart';
 import '../entities/artwork.dart';
 import '../model/user_service.dart';
 
-class FavoritesState {
-  final List<Artwork> favorites;
-  final bool isLoading;
-  final String? error;
+abstract class FavoritesState {}
 
-  FavoritesState({
-    required this.favorites,
-    this.isLoading = false,
-    this.error,
-  });
+class FavoritesInitial extends FavoritesState {}
+
+class FavoritesLoading extends FavoritesState {}
+
+class FavoritesLoaded extends FavoritesState {
+  final List<Artwork> favorites;
+
+  FavoritesLoaded(this.favorites);
+}
+
+class IsLikedLoaded extends FavoritesState {
+  final bool isLiked;
+
+  IsLikedLoaded(this.isLiked);
+}
+
+class Error extends FavoritesState {
+  final String message;
+
+  Error(this.message);
 }
 
 class FavoritesCubit extends Cubit<FavoritesState> {
   final UserService userService;
 
-  FavoritesCubit(this.userService) : super(FavoritesState(favorites: []));
+  FavoritesCubit(this.userService) : super(FavoritesInitial());
 
-  // Método para obtener los favoritos del usuario
-  Future<List<Artwork>> fetchFavorites(int userId) async {
-    emit(FavoritesState(favorites: [], isLoading: true));
+  Future<void> fetchFavorites(int userId) async {
+    emit(FavoritesLoading());
     try {
       final favorites = await userService.getFavorites(userId);
-      emit(FavoritesState(favorites: favorites));
-      return favorites;
+      emit(FavoritesLoaded(favorites));
     } catch (e) {
-      emit(FavoritesState(favorites: [], error: 'Error fetching favorites'));
-      return [];
+      emit(Error('Error fetching favorites'));
     }
   }
 
-  // Método para eliminar un favorito
   Future<void> removeFavorite(int userId, int artworkId) async {
+    emit(FavoritesLoading());
     try {
       await userService.removeFavorite(userId, artworkId);
-      final updatedFavorites = state.favorites
-          .where((artwork) => artwork.id != artworkId)
-          .toList();
-      emit(FavoritesState(favorites: updatedFavorites));
+      final updatedFavorites = await userService.getFavorites(userId);
+      emit(FavoritesLoaded(updatedFavorites));
     } catch (e) {
-      emit(FavoritesState(favorites: state.favorites, error: 'Error deleting favorite'));
+      emit(Error('Error deleting favorite'));
     }
   }
 
-// Método para añadir un favorito
   Future<void> addFavorite(int userId, int artworkId) async {
+    emit(FavoritesLoading());
     try {
-      final addedArtwork = await userService.addFavorite(userId, artworkId);
-      final updatedFavorites = List<Artwork>.from(state.favorites)
-        ..add(addedArtwork);
-      emit(FavoritesState(favorites: updatedFavorites));
+      await userService.addFavorite(userId, artworkId);
+      final updatedFavorites = await userService.getFavorites(userId);
+      emit(FavoritesLoaded(updatedFavorites));
     } catch (e) {
-      emit(FavoritesState(favorites: state.favorites, error: 'Error adding favorite'));
+      emit(Error('Error adding favorite'));
+    }
+  }
+
+  Future<void> isArtworkLiked(int userId, int artworkId) async {
+    emit(FavoritesLoading());
+    try {
+      final isLiked = await userService.isArtworkFavorite(userId, artworkId);
+      emit(IsLikedLoaded(isLiked));
+    } catch (e) {
+      emit(Error('Error getting if artwork is liked'));
     }
   }
 

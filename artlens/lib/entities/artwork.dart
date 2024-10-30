@@ -29,7 +29,7 @@ class Artwork extends HiveObject {
   final String image;
 
   @HiveField(8)
-  final bool isPromoted;
+  final bool isSpotlight;
 
   @HiveField(9)
   final int museum;
@@ -46,7 +46,7 @@ class Artwork extends HiveObject {
     required this.interpretation,
     required this.advancedInfo,
     required this.image,
-    required this.isPromoted,
+    required this.isSpotlight,
     required this.museum,
     required this.artist,
   });
@@ -62,7 +62,7 @@ class Artwork extends HiveObject {
       interpretation: json["fields"]['interpretation'],
       advancedInfo: json["fields"]['advancedInfo'],
       image: json["fields"]['image'],
-      isPromoted: json["fields"]['isPromoted'],
+      isSpotlight: json["fields"]['isSpotlight'],
       museum: json["fields"]['museum'],
       artist: json["fields"]['artist'],
     );
@@ -80,7 +80,7 @@ class Artwork extends HiveObject {
         'interpretation': interpretation,
         'advancedInfo': advancedInfo,
         'image': image,
-        'isPromoted': isPromoted,
+        'isSpotlight': isSpotlight,
         'museum': museum,
         'artist': artist,
       },

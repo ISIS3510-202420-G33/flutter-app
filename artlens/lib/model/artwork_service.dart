@@ -16,20 +16,19 @@ class ArtworkService {
   ArtworkService._internal();
 
   Future<Artwork> fetchArtworkById(int id) async {
-    // Cache key to store artwork data
+    // Cache key to store artwork data JC
     final cacheKey = 'artwork_$id';
     final cachedFile = await _cacheManager.getFileFromCache(cacheKey);
+
 
     if (cachedFile != null) {
       // If the file exists in the cache, use it
       final cachedData = await cachedFile.file.readAsString();
       final decodedData = jsonDecode(cachedData);
 
-      // Verifica si es una lista o un mapa
       if (decodedData is List && decodedData.isNotEmpty) {
-        return Artwork.fromJson(Map<String, dynamic>.from(decodedData[0])); // Toma el primer elemento si es lista
-      } else if (decodedData is Map) {
-        return Artwork.fromJson(Map<String, dynamic>.from(decodedData)); // Usa el mapa directamente
+        final artworkData = Map<String, dynamic>.from(decodedData[0]);
+        return Artwork.fromJson(artworkData);
       } else {
         throw Exception('Invalid cached data format for artwork');
       }
