@@ -2,6 +2,7 @@ import 'dart:convert';
 import '../entities/artwork.dart';
 import '../entities/user.dart';
 import '../model/api_adapter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class UserService {
   static final UserService _instance = UserService._internal();
@@ -15,6 +16,13 @@ class UserService {
   final ApiAdapter apiAdapter = ApiAdapter.instance;
 
   Future<User?> authenticateUser(String userName, String password) async {
+    // Verifica el estado de conectividad antes de hacer la solicitud
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) {
+      throw Exception('No internet connection'); // Lanza una excepción si no hay conexión
+    }
+
+    // Procede con la autenticación si hay conexión
     final response = await apiAdapter.post('/user/authenticate', {
       'userName': userName,
       'password': password,
