@@ -127,8 +127,8 @@ class AppFacade {
   }
 
   // Artwork management
-  void fetchArtworkAndRelatedEntities(int id) {
-    artworkCubit.fetchArtworkAndRelatedEntities(id);
+  void fetchArtworkAndRelatedEntities(int artworkId) {
+    artworkCubit.fetchArtworkAndRelatedEntities(artworkId);
   }
 
   void fetchArtworksByArtistId(int id) {
@@ -141,6 +141,13 @@ class AppFacade {
 
   void fetchArtworksByMuseumId(int museumId) {
     museumArtworkCubit.fetchArtworksByMuseumId(museumId);
+  }
+
+  void fetchCommentsByArtworkId(int artworkId) async {
+    final userId = await _getUserId();
+    if (userId != null) {
+      commentsCubit.fetchCommentsByArtworkId(artworkId, userId);
+    }
   }
 
   // Artist management
@@ -162,29 +169,31 @@ class AppFacade {
   }
 
   // Favorites management
-
-  // Obtener los favoritos del usuario
-  Future<List<Artwork>> fetchFavorites() async {
+  void fetchFavorites() async {
     final userId = await _getUserId();
     if (userId != null) {
-      final favorites = favoritesCubit.fetchFavorites(userId);
-      return favorites;
+      favoritesCubit.fetchFavorites(userId);
     }
-    return [];
   }
 
   Future<void> addFavorite(int artworkId) async {
     final userId = await _getUserId();
     if (userId != null) {
-      await favoritesCubit.addFavorite(userId, artworkId);
+      favoritesCubit.addFavorite(userId, artworkId);
     }
   }
 
-  // Eliminar un favorito del usuario
   Future<void> removeFavorite(int artworkId) async {
     final userId = await _getUserId();
     if (userId != null) {
       favoritesCubit.removeFavorite(userId, artworkId);
+    }
+  }
+
+  void isArtworkLiked(int artworkId) async {
+    final userId = await _getUserId();
+    if (userId != null) {
+      favoritesCubit.isArtworkLiked(userId, artworkId);
     }
   }
 
@@ -194,37 +203,16 @@ class AppFacade {
     return prefs.getInt('userId');
   }
 
-  // Obtener comentarios de una obra de arte
-  Future<List<Comment>> fetchCommentsByArtworkId(int artworkId) async {
-    try {
-      final comments = await commentsCubit.fetchCommentsByArtworkId(artworkId);
-      return comments;
-    } catch (e) {
-      // Manejo de errores
-      print('Error fetching museums: $e');
-      return [];
-    }
-  }
-
   void clearRecommendations() {
     recommendationsCubit.clearRecommendations();
   }
 
-  // Publicar un comentario en una obra de arte
-  Future<void> postComment(String content, String date, int artworkId) async {
-    final userId = await _getUserId();  // Obtén el ID del usuario autenticado
+  // Comments management
+  void postComment(String content, String date, int artworkId) async {
+    final userId = await _getUserId();
     if (userId != null) {
-      await commentsCubit.postComment(content, date, artworkId, userId);
+      commentsCubit.postComment(content, date, artworkId, userId);
     }
-  }
-
-  // Método para obtener el nombre de usuario por ID
-  Future<String?> getUsername(int userId) async {
-    await commentsCubit.fetchUsername(userId);
-    if (commentsCubit.state is CommentsLoaded) {
-      return (commentsCubit.state as CommentsLoaded).username;
-    }
-    return null;
   }
 
   // Obtener la lista de museos

@@ -25,7 +25,7 @@ class ArtworkAdapter extends TypeAdapter<Artwork> {
       interpretation: fields[5] as String,
       advancedInfo: fields[6] as String,
       image: fields[7] as String,
-      isPromoted: fields[8] as bool,
+      isSpotlight: fields[8] as bool,
       museum: fields[9] as int,
       artist: fields[10] as int,
     );
@@ -52,7 +52,7 @@ class ArtworkAdapter extends TypeAdapter<Artwork> {
       ..writeByte(7)
       ..write(obj.image)
       ..writeByte(8)
-      ..write(obj.isPromoted)
+      ..write(obj.isSpotlight)
       ..writeByte(9)
       ..write(obj.museum)
       ..writeByte(10)

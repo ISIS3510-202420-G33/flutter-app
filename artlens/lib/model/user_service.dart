@@ -53,7 +53,7 @@ class UserService {
       return null;  // Handle unexpected errors
     }
   }
-  // Obtener favoritos del usuario
+
   Future<List<Artwork>> getFavorites(int userId) async {
     final response = await apiAdapter.get('/user/liked/$userId');
     if (response.statusCode == 200) {
@@ -64,13 +64,13 @@ class UserService {
     }
   }
 
-  // Eliminar un favorito
   Future<void> removeFavorite(int userId, int artworkId) async {
     final response = await apiAdapter.delete('/user/liked/$userId/$artworkId');
     if (response.statusCode != 204) {
       throw Exception('Error deleting favorite');
     }
   }
+
   // Añadir un favorito y retornar la obra likeada
   Future<Artwork> addFavorite(int userId, int artworkId) async {
     final response = await apiAdapter.post('/user/like', {
@@ -84,4 +84,21 @@ class UserService {
       throw Exception('Error adding favorite');
     }
   }
+
+  Future<bool> isArtworkFavorite(int userId, int artworkId) async {
+    final response = await apiAdapter.get('/user/isLiked/$userId/$artworkId');
+
+    if (response.statusCode == 200) {
+      if (response.body.trim() == 'True') {
+        return true;
+      } else if (response.body.trim() == 'False') {
+        return false;
+      } else {
+        throw Exception('Formato de respuesta inesperado: ${response.body}');
+      }
+    } else {
+      throw Exception('Error al obtener favoritos');
+    }
+  }
+
 }
