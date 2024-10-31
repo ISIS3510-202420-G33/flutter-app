@@ -1,3 +1,4 @@
+import 'package:artlens/view_model/connectivity_cubit.dart';
 import 'package:artlens/view_model/museum_artwork_cubit.dart';
 import 'package:artlens/view_model/search_cubit.dart';
 import 'package:artlens/view_model/spotlight_artworks_cubit.dart';
@@ -61,6 +62,7 @@ void main() async {
   final recommendationsCubit = RecommendationsCubit(AnalyticEngineService());
   final searchCubit=SearchCubit(ArtworkService(), MuseumService(), ArtistService());
   final museumArtworkCubit = MuseumArtworkCubit(ArtworkService());
+  final connectivityCubit = ConnectivityCubit();
 
 
   final appFacade = AppFacade(
@@ -76,6 +78,7 @@ void main() async {
     recommendationsCubit,
     searchCubit,
     museumArtworkCubit,
+    connectivityCubit,
 
   );
 
@@ -92,7 +95,8 @@ void main() async {
         BlocProvider(create: (_) => authCubit),
         BlocProvider(create: (_) => favoritesCubit),
         BlocProvider(create: (_) => mapCubit),
-        BlocProvider(create: (_) => searchCubit)
+        BlocProvider(create: (_) => searchCubit),
+        BlocProvider(create: (_) => connectivityCubit)
       ],
       child: ArtLensApp(appFacade: appFacade),
     ),

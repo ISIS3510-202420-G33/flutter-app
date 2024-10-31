@@ -1,3 +1,4 @@
+import 'package:artlens/view_model/connectivity_cubit.dart';
 import 'package:artlens/view_model/search_cubit.dart';
 import 'package:artlens/view_model/spotlight_artworks_cubit.dart';
 import 'package:artlens/view_model/recommendations_cubit.dart';
@@ -31,6 +32,7 @@ class AppFacade {
   final RecommendationsCubit recommendationsCubit;
   final SearchCubit searchCubit;
   final MuseumArtworkCubit museumArtworkCubit;
+  final ConnectivityCubit connectivityCubit;
 
   AppFacade(
       this.artworkCubit,
@@ -44,7 +46,8 @@ class AppFacade {
       this.spotlightArtworksCubit,
       this.recommendationsCubit,
       this.searchCubit,
-      this.museumArtworkCubit
+      this.museumArtworkCubit,
+      this.connectivityCubit
       );
 
   // Métodos para manejar la búsqueda
@@ -61,16 +64,25 @@ class AppFacade {
     try {
       User? user = await userService.authenticateUser(username, password);
       if (user != null) {
-        authCubit.logIn(user);  // Update AuthCubit to authenticated state
+        authCubit.logIn(user);  // Actualiza AuthCubit al estado autenticado
         print("User data saved: ${user.userName}");
       } else {
-        authCubit.logOut();  // Ensure the state is unauthenticated if login fails
+        authCubit.logOut();  // Asegura que el estado sea no autenticado si falla el inicio de sesión
       }
     } catch (e) {
-      authCubit.logOut();  // Ensure state is unauthenticated on error
-      rethrow;  // Optionally, throw the error again to handle it in the UI
+      // Si la excepción es causada por falta de conexión, maneja el error de manera específica
+      if (e.toString() == 'Exception: No internet connection') {
+        print("No internet connection. Please check your network.");
+        // Aquí podrías manejar la notificación en la UI, si es necesario.
+      } else {
+        print("An unexpected error occurred: $e");
+      }
+
+      authCubit.logOut();  // Asegura que el estado sea no autenticado en caso de error
+      rethrow;  // Opcionalmente, lanza la excepción de nuevo para manejarla en la UI
     }
   }
+
 
   // Registration
   Future<String?> registerUser(String name, String userName, String email, String password) async {
