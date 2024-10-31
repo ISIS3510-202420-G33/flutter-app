@@ -45,6 +45,8 @@ void main() async {
 
   // Open necessary Hive boxes
   await Hive.openBox<Artwork>('spotlightArtworks');
+  await Hive.openBox<Artwork>('favoritesArtworks');
+
   await Hive.openBox('metadata'); // For storing metadata like last refresh date
 
   // Initialize SharedPreferences before building the app
