@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../entities/artist.dart';
+
 class ApiAdapter {
-  final String baseUrl = 'http://192.168.5.105:8000/';
+  final String baseUrl = 'http://157.253.163.207:8000';
 
 
   static final ApiAdapter _instance = ApiAdapter._privateConstructor();
@@ -45,6 +47,16 @@ class ApiAdapter {
       return response;
     } catch (e) {
       throw Exception('Failed to delete data: $e');
+    }
+  }
+
+  Future<List<Artist>> fetchAllArtists() async {
+    final response = await get('/artists');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Artist.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load artists: ${response.reasonPhrase}');
     }
   }
 }

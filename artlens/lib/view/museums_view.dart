@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../routes.dart';
 import '../view_model/facade.dart';
 import '../view_model/museum_cubit.dart';
+import '../view_model/connectivity_cubit.dart';
 import '../entities/museum.dart';
 import '../widgets/custom_app_bar.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class MuseumsView extends StatefulWidget {
   final AppFacade appFacade;
@@ -16,10 +18,63 @@ class MuseumsView extends StatefulWidget {
 }
 
 class _MuseumsViewState extends State<MuseumsView> {
+  bool isOnline = true;
+  bool isFetch = false;
+
   @override
   void initState() {
     super.initState();
-    widget.appFacade.fetchAllMuseums();
+    _initializeConnectivity();
+  }
+
+  Future<void> _initializeConnectivity() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    isOnline = connectivityResult[0] != ConnectivityResult.none;
+    if (isOnline) {
+      isFetch = true;
+      widget.appFacade.fetchAllMuseums();
+    } else {
+      if (isFetch) {
+        setState(() {
+          isOnline;
+        });
+      } else {
+        widget.appFacade.fetchAllMuseums();
+      }
+    }
+  }
+
+  void _handleConnectivityChange(BuildContext context, ConnectivityState state) {
+    if (state is ConnectivityOffline) {
+      setState(() {
+        isOnline = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connection lost. Some features may not be available.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else if (state is ConnectivityOnline) {
+
+      if (!isFetch) {
+        Future.delayed(const Duration(seconds: 5), () {
+          isFetch = true;
+          widget.appFacade.fetchAllMuseums();
+        });
+      } else {
+        setState(() {
+          isOnline = true;
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connection restored.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
   }
 
   @override
@@ -28,43 +83,60 @@ class _MuseumsViewState extends State<MuseumsView> {
       appBar: CustomAppBar(title: "MUSEUMS", showProfileIcon: true, showBackArrow: true),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: BlocBuilder<MuseumCubit, MuseumState>(
-          bloc: widget.appFacade.museumCubit,
-          builder: (context, state) {
-            if (state is MuseumLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is MuseumsLoaded) {
-              // Agrupar museos alfabéticamente
-              final groupedMuseums = _groupMuseumsByLetter(state.museums);
+        child: MultiBlocListener(
+          listeners: [
+            BlocListener<ConnectivityCubit, ConnectivityState>(
+              listener: _handleConnectivityChange,
+            )
+          ],
+          child: BlocBuilder<MuseumCubit, MuseumState>(
+            bloc: widget.appFacade.museumCubit,
+            builder: (context, state) {
+              if (state is MuseumLoading) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (state is MuseumsLoaded) {
+                final groupedMuseums = _groupMuseumsByLetter(state.museums);
+                return ListView.builder(
+                  itemCount: groupedMuseums.length,
+                  itemBuilder: (context, index) {
+                    final letter = groupedMuseums.keys.elementAt(index);
+                    final museums = groupedMuseums[letter]!;
 
-              return ListView.builder(
-                itemCount: groupedMuseums.length,
-                itemBuilder: (context, index) {
-                  final letter = groupedMuseums.keys.elementAt(index);
-                  final museums = groupedMuseums[letter]!;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(
-                          letter,
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: Text(
+                            letter,
+                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      ),
-                      ...museums.map((museum) => _buildMuseumItem(museum)).toList(),
-                      const Divider(thickness: 1, height: 32),
-                    ],
-                  );
-                },
-              );
-            } else if (state is Error) {
-              return Center(child: Text('Error: ${state.message}'));
-            } else {
-              return const Center(child: Text("No museums to display"));
-            }
-          },
+                        ...museums.map((museum) => _buildMuseumItem(museum)),
+                        const Divider(thickness: 1, height: 32),
+                      ],
+                    );
+                  },
+                );
+              } else if (state is Error) {
+                return Center(
+                  child: Text(
+                    isOnline
+                        ? 'Error loading museums: ${state.message}'
+                        : "No internet connection. Waiting for connection...",
+                    textAlign: TextAlign.center,
+                  ),
+                );
+              } else {
+                return const Center(
+                    child: Text(
+                      "Unexpected error occurred",
+                      textAlign: TextAlign.center,
+                    )
+                );
+              }
+            },
+          ),
         ),
       ),
     );
@@ -72,26 +144,24 @@ class _MuseumsViewState extends State<MuseumsView> {
 
   Widget _buildMuseumItem(Museum museum) {
     return GestureDetector(
-      onTap: () {
-        // Navegar a la vista del museo
+      onTap: isOnline
+          ? () {
         Navigator.pushNamed(context, Routes.museum, arguments: {'museum': museum});
-      },
+      }
+          : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
           children: [
-            if (museum.image != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Image.network(
-                  museum.image!,
-                  height: 80,
-                  width: 80,
-                  fit: BoxFit.cover,
-                ),
-              )
-            else
-              const Icon(Icons.image, size: 80),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8.0),
+              child: Image.network(
+                museum.image,
+                height: 80,
+                width: 80,
+                fit: BoxFit.cover,
+              ),
+            ),
             const SizedBox(width: 16),
             Expanded(
               child: Text(
@@ -106,11 +176,9 @@ class _MuseumsViewState extends State<MuseumsView> {
     );
   }
 
-  // Método para agrupar los museos por la letra inicial del nombre
+  // Group museums by the first letter of their name
   Map<String, List<Museum>> _groupMuseumsByLetter(List<Museum> museums) {
-    // Ordenar museos alfabéticamente
     museums.sort((a, b) => a.name.compareTo(b.name));
-
     final Map<String, List<Museum>> groupedMuseums = {};
     for (var museum in museums) {
       final letter = museum.name[0].toUpperCase();

@@ -32,8 +32,8 @@ class MuseumCubit extends Cubit<MuseumState> {
   MuseumCubit(this.museumService) : super(MuseumInitial());
 
   Future<void> fetchMuseumById(int id) async {
+    emit(MuseumLoading());
     try {
-      emit(MuseumLoading());
       final museum = await museumService.fetchMuseumById(id);
       emit(MuseumLoaded(museum));
     } catch (e) {
@@ -42,8 +42,8 @@ class MuseumCubit extends Cubit<MuseumState> {
   }
 
   Future<void> fetchMuseums() async {
+    emit(MuseumLoading());
     try {
-      emit(MuseumLoading());
       final museums = await museumService.fetchAllMuseums();
       emit(MuseumsLoaded(museums));
     } catch (e) {
