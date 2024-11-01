@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner/qr_code_scanner.dart';
+import '../entities/artwork.dart';
+import '../model/artwork_service.dart';
 import '../routes.dart';
 import '../widgets/custom_app_bar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../model/firestore_service.dart';
 
 class CameraPreviewScreen extends StatefulWidget {
   @override
@@ -13,6 +17,14 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
   Barcode? result;
   QRViewController? qrController;
   bool hasNavigated = false;
+  final FirestoreService _firestoreService = FirestoreService();
+  late final ArtworkService artworkService;
+
+  @override
+  void initState() {
+    super.initState();
+    artworkService = ArtworkService(); // Inicializa el servicio aquí
+  }
 
   @override
   void dispose() {
@@ -56,15 +68,34 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
       this.qrController = controller;
     });
 
-    controller.scannedDataStream.listen((scanData) {
-      setState(() {
+    controller.scannedDataStream.listen((scanData) async {
+      setState(() async {
         result = scanData;
         if (result != null && !hasNavigated) {
           try {
             int id = int.parse(result!.code!);
             hasNavigated = true;
 
-            // Once the QR code is scanned, navigate to ArtworkView and pass the ID
+            try {
+              // Obtener el usuario desde SharedPreferences
+              final prefs = await SharedPreferences.getInstance();
+              final username = prefs.getString('userName');
+              DateTime date = DateTime.now();
+
+              Artwork artwork = await artworkService.fetchArtworkById(id);
+              final museum = artwork.museum;
+
+              // Guardar la información en Firestore
+              await _firestoreService.addDocument('BQ51', {
+                'Usuario': username,
+                'Fecha': date,
+                'Museo': museum,
+              });
+            } catch (e) {
+              print('Error adding document to Firebase: $e');
+            }
+
+            // Navegar a `ArtworkView` y pasar el ID
             Navigator.pushNamed(
               context,
               Routes.artwork,
