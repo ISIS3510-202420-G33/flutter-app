@@ -53,12 +53,6 @@ class ArtistService {
   }
 
   Future<List<Artist>> fetchAllArtists() async {
-    final response = await apiAdapter.get('/artists');
-    if (response.statusCode == 200) {
-      List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData.map((data) => Artist.fromJson(data)).toList();
-    } else {
-      throw Exception('Failed to load artists: ${response.reasonPhrase}');
-    }
+    return await apiAdapter.fetchAllArtists();
   }
 }

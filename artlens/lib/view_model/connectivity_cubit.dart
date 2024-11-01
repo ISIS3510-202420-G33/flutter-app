@@ -17,13 +17,10 @@ class ConnectivityCubit extends Cubit<ConnectivityState> {
 
   void _monitorConnectivity() {
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((results) {
-      // Verificamos si la lista contiene `ConnectivityResult.none` para detectar falta de conexión
       if (results.contains(ConnectivityResult.none)) {
         emit(ConnectivityOffline());
-        print("No connection"); // Log para confirmar desconexión
       } else {
         emit(ConnectivityOnline());
-        print("Connected"); // Log para confirmar conexión
       }
     });
   }
