@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive/hive.dart';
 import '../view_model/favorites_cubit.dart';
-import '../view_model/connectivity_cubit.dart'; // Importa el cubit de conectividad
+import '../view_model/connectivity_cubit.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../entities/artwork.dart';
 import '../routes.dart';
 import '../view_model/facade.dart';
+import 'dart:io';
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -35,6 +37,7 @@ class _FavoritesViewState extends State<FavoritesView> {
   void initState() {
     super.initState();
     widget.appFacade.fetchFavorites();
+    _printHiveDatabaseState(); // Llamada para imprimir el estado de Hive al iniciar
   }
 
   // Método para manejar la navegación de la barra inferior
@@ -68,6 +71,22 @@ class _FavoritesViewState extends State<FavoritesView> {
     }
     return text;
   }
+
+  // Método para imprimir el estado de la base de datos de Hive
+  Future<void> _printHiveDatabaseState() async {
+    final favoritesBox = Hive.box<Artwork>('favoritesArtworks');
+    print("=== Estado de la base de datos de Hive ===");
+    print("Total de elementos en Hive: ${favoritesBox.length}");
+
+    for (var artwork in favoritesBox.values) {
+      print("Artwork ID: ${artwork.id}");
+      print("Name: ${artwork.name}");
+      print("Local Image Path: ${artwork.localImagePath}");
+      print("Local Image Exists: ${artwork.localImagePath != null && File(artwork.localImagePath!).existsSync()}");
+    }
+    print("=========================================");
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +125,16 @@ class _FavoritesViewState extends State<FavoritesView> {
                         final Artwork artwork = state.favorites[index];
                         bool iconPressed = isPressed[artwork.id] ?? false;
 
+                        // Verificar si la imagen local existe
+                        final localImagePath = artwork.localImagePath;
+                        final localImageExists = localImagePath != null && File(localImagePath).existsSync();
+
+                        // Imprimir la información de la imagen en la consola
+                        print("Artwork ID: ${artwork.id}");
+                        print("Local Image Path: $localImagePath");
+                        print("Local Image Exists: $localImageExists");
+                        print("Network Image URL: ${artwork.image}");
+
                         return GestureDetector(
                           onTap: () {
                             if (isOnline) {
@@ -125,11 +154,23 @@ class _FavoritesViewState extends State<FavoritesView> {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  Image.network(
+                                  // Verifica si hay una imagen local disponible; de lo contrario, usa la imagen de red
+                                  localImageExists
+                                      ? Image.file(
+                                    File(localImagePath!),
+                                    height: 100,
+                                    width: 100,
+                                    fit: BoxFit.cover,
+                                  )
+                                      : Image.network(
                                     artwork.image,
                                     height: 100,
                                     width: 100,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      print("Error loading network image for ${artwork.name}");
+                                      return Icon(Icons.image_not_supported, size: 100);
+                                    },
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(

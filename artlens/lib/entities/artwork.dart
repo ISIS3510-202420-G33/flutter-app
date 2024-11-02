@@ -37,6 +37,9 @@ class Artwork extends HiveObject {
   @HiveField(10)
   final int artist;
 
+  @HiveField(11)  // New field for local image path
+  String? localImagePath;
+
   Artwork({
     required this.id,
     required this.name,
@@ -49,6 +52,7 @@ class Artwork extends HiveObject {
     required this.isSpotlight,
     required this.museum,
     required this.artist,
+    this.localImagePath
   });
 
   // Method to deserialize JSON to Artwork object
@@ -83,6 +87,7 @@ class Artwork extends HiveObject {
         'isSpotlight': isSpotlight,
         'museum': museum,
         'artist': artist,
+        'localImagePath': localImagePath,
       },
     };
   }
