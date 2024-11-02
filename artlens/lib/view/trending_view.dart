@@ -1,6 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../view_model/connectivity_cubit.dart';
 import '../view_model/facade.dart';
 import '../view_model/spotlight_artworks_cubit.dart';
 import '../view_model/recommendations_cubit.dart';
@@ -29,35 +30,74 @@ class TrendingView extends StatefulWidget {
 }
 
 class _TrendingViewState extends State<TrendingView> {
-  int? userId;
+  bool isOnline = true;
+  bool isFetched = false;
   int _selectedIndex = 2;
 
   @override
   void initState() {
     super.initState();
     widget.appFacade.fetchSpotlightArtworks();
-    _loadUserId();
+    _initializeConnectivity();
   }
 
-  // Load userId from SharedPreferences and fetch recommendations
-  Future<void> _loadUserId() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      userId = prefs.getInt('userId');
-    });
-
-    if (userId != null) {
-      widget.appFacade.fetchRecommendationsByUserId(userId!);
+  Future<void> _initializeConnectivity() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    isOnline = connectivityResult[0] != ConnectivityResult.none;
+    if (isOnline) {
+      isFetched = true;
+      widget.appFacade.fetchSpotlightArtworks();
+      widget.appFacade.fetchRecommendationsByUserId();
     } else {
-      widget.appFacade.clearRecommendations();
+      if (isFetched) {
+        setState(() {
+          isOnline;
+        });
+      } else {
+        widget.appFacade.fetchSpotlightArtworks();
+        widget.appFacade.fetchRecommendationsByUserId(); // Fail gracefully
+      }
+    }
+  }
+
+  void _handleConnectivityChange(BuildContext context, ConnectivityState state) {
+    if (state is ConnectivityOffline) {
+      setState(() {
+        isOnline = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connection lost. Some features may not be available.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else if (state is ConnectivityOnline) {
+
+      if (!isFetched) {
+        Future.delayed(const Duration(seconds: 5), () {
+          isFetched = true;
+          widget.appFacade.fetchSpotlightArtworks();
+          widget.appFacade.fetchRecommendationsByUserId();
+        });
+      } else {
+        setState(() {
+          isOnline = true;
+        });
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Connection restored.'),
+          backgroundColor: Colors.green,
+        ),
+      );
     }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Check if the user is logged in each time the view's state changes
-    _loadUserId();
+    widget.appFacade.fetchRecommendationsByUserId();
   }
 
   // Handle navigation between views in the bottom navigation bar
@@ -68,8 +108,6 @@ class _TrendingViewState extends State<TrendingView> {
         Navigator.pushNamedAndRemoveUntil(context, Routes.home, (route) => false);
       } else if (index == 1) {
         Navigator.pushNamed(context, Routes.camera);
-      } else if (index == 2) {
-        // Already in Trending
       }
     });
   }
@@ -89,17 +127,8 @@ class _TrendingViewState extends State<TrendingView> {
       appBar: CustomAppBar(title: "TRENDING", showProfileIcon: false),
       body: MultiBlocListener(
         listeners: [
-          BlocListener<SpotlightArtworksCubit, SpotlightArtworksState>(
-            bloc: widget.appFacade.spotlightArtworksCubit,
-            listener: (context, state) {
-              // Handle any specific actions or states related to PromotedArtworks
-            },
-          ),
-          BlocListener<RecommendationsCubit, RecommendationsState>(
-            bloc: widget.appFacade.recommendationsCubit,
-            listener: (context, state) {
-              // Handle any specific actions or states related to Recommendations
-            },
+          BlocListener<ConnectivityCubit, ConnectivityState>(
+            listener: _handleConnectivityChange,
           ),
         ],
         child: Column(
@@ -113,7 +142,7 @@ class _TrendingViewState extends State<TrendingView> {
                     builder: (context, recommendationsState) {
                       if (spotlightState is SpotlightArtworksLoading ||
                           recommendationsState is RecommendationsLoading) {
-                        return Center(child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       List<Artwork> spotlightArtworks = [];
@@ -127,44 +156,59 @@ class _TrendingViewState extends State<TrendingView> {
                         recommendationsByUserId = recommendationsState.recommendationsByUserId;
                       }
 
-                      if (spotlightArtworks.isEmpty && recommendationsByUserId.isEmpty) {
-                        return Center(child: Text('No trending or promoted artworks found.'));
-                      }
-
                       return ScrollConfiguration(
                         behavior: NoGlowScrollBehavior(),
                         child: ListView(
                           padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
                           children: [
                             // Section for Promoted Artworks
-                            if (spotlightArtworks.isNotEmpty) ...[
-                              Text(
-                                'Spotlight',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'OpenSans',
-                                ),
-                                textAlign: TextAlign.center,
+                            const Text(
+                              'Spotlight',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'OpenSans',
                               ),
-                              const SizedBox(height: 10),
-                              ...spotlightArtworks.map((artwork) => _buildArtworkTile(artwork)).toList(),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 10),
+                            if (spotlightArtworks.isNotEmpty) ...[
+                              ...spotlightArtworks.map((artwork) => _buildArtworkTile(artwork)),
                               const SizedBox(height: 20),
+                            ] else if (!isOnline) ...[
+                              const Center(
+                                child: Text(
+                                  "No internet connection. Waiting for connection...",
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ] else ...[
+                              const Center(child: Text('No spotlight artworks available.')),
                             ],
 
                             // Section for User-based Recommendations
-                            if (recommendationsByUserId.isNotEmpty) ...[
-                              Text(
-                                'Based on your favoritess',
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'OpenSans',
-                                ),
-                                textAlign: TextAlign.center,
+                            const Text(
+                              'Based on your favorites',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'OpenSans',
                               ),
-                              const SizedBox(height: 10),
-                              ...recommendationsByUserId.map((artwork) => _buildArtworkTile(artwork)).toList(),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 10),
+                            if (recommendationsByUserId.isNotEmpty) ...[
+                              ...recommendationsByUserId.map((artwork) => _buildArtworkTile(artwork)),
+                            ] else if (!isOnline) ...[
+                              const Center(
+                                child: Text(
+                                  "No internet connection. Waiting for connection...",
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ] else ...[
+                              const Center(child: Text('No recommendations available.')),
                             ],
                           ],
                         ),
@@ -187,13 +231,15 @@ class _TrendingViewState extends State<TrendingView> {
   // Helper method to build artwork tile
   Widget _buildArtworkTile(Artwork artwork) {
     return GestureDetector(
-      onTap: () {
+      onTap: isOnline
+          ? () {
         Navigator.pushNamed(
           context,
           Routes.artwork,
           arguments: {'id': artwork.id},
         );
-      },
+      }
+          : null,
       child: Column(
         children: [
           Row(
