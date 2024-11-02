@@ -1,9 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:isolate';
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import '../entities/artwork.dart';
 import '../entities/user.dart';
 import '../model/api_adapter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:hive/hive.dart';
+import 'package:http/http.dart' as http;
 
 class UserService {
   static final UserService _instance = UserService._internal();
@@ -15,7 +20,7 @@ class UserService {
   UserService._internal();
 
   final ApiAdapter apiAdapter = ApiAdapter.instance;
-  final Box<Artwork> _favoritesBox = Hive.box<Artwork>('favoritesArtworks'); // Caja de Hive para favoritos
+  final Box<Artwork> _favoritesBox = Hive.box<Artwork>('favoritesArtworks');
 
   Future<User?> authenticateUser(String userName, String password) async {
     final connectivity = await Connectivity().checkConnectivity();
@@ -55,26 +60,24 @@ class UserService {
 
   Future<List<Artwork>> getFavorites(int userId) async {
     try {
-      // Verificar conectividad
       final connectivity = await Connectivity().checkConnectivity();
       if (connectivity == ConnectivityResult.none) {
         print("No internet connection: loading from local storage.");
-        // Sin conexión: devolver datos locales desde Hive
         final localFavorites = _favoritesBox.values.toList();
         print("Loaded ${localFavorites.length} favorites from local storage.");
         return localFavorites;
       }
 
-      // Con conexión: obtener datos del backend
       final response = await apiAdapter.get('/user/liked/$userId');
       if (response.statusCode == 200) {
         List<dynamic> jsonResponse = jsonDecode(response.body);
         List<Artwork> favorites = jsonResponse.map((json) => Artwork.fromJson(json)).toList();
 
-        // Guardar los datos obtenidos en Hive para acceso offline
-        await _saveFavoritesToLocal(favorites);
-        print("Favorites loaded from server and saved locally.");
+        for (var artwork in favorites) {
+          _processImageDownloadAndSave(artwork);
+        }
 
+        print("Favorites loaded from server.");
         return favorites;
       } else {
         throw Exception('Failed to load data: ${response.reasonPhrase}');
@@ -82,7 +85,6 @@ class UserService {
     } catch (e) {
       print("Error in getFavorites: $e");
       if (_favoritesBox.isOpen) {
-        // Intentar devolver los datos locales si Hive está disponible
         print("Returning local data due to error.");
         return _favoritesBox.values.toList();
       } else {
@@ -96,7 +98,6 @@ class UserService {
     if (response.statusCode != 204) {
       throw Exception('Error deleting favorite');
     }
-    // Refrescar favoritos en Hive después de eliminar uno
     final updatedFavorites = await getFavorites(userId);
     await _saveFavoritesToLocal(updatedFavorites);
   }
@@ -110,7 +111,6 @@ class UserService {
       final jsonResponse = jsonDecode(response.body);
       Artwork artwork = Artwork.fromJson(jsonResponse);
 
-      // Agregar el favorito a Hive y actualizar la lista completa
       await _favoritesBox.add(artwork);
       final updatedFavorites = await getFavorites(userId);
       await _saveFavoritesToLocal(updatedFavorites);
@@ -125,25 +125,106 @@ class UserService {
     final response = await apiAdapter.get('/user/isLiked/$userId/$artworkId');
 
     if (response.statusCode == 200) {
-      if (response.body.trim() == 'True') {
-        return true;
-      } else if (response.body.trim() == 'False') {
-        return false;
-      } else {
-        throw Exception('Formato de respuesta inesperado: ${response.body}');
-      }
+      return response.body.trim() == 'True';
     } else {
-      throw Exception('Error al obtener favoritos');
+      throw Exception('Error fetching favorite status');
     }
   }
 
-  // Guardar favoritos localmente en Hive
+  Future<void> _processImageDownloadAndSave(Artwork artwork) async {
+    final receivePort = ReceivePort();
+    final rootIsolateToken = ServicesBinding.rootIsolateToken!;
+    await Isolate.spawn(_downloadImageInIsolate, [artwork.image, artwork.id.toString(), receivePort.sendPort, rootIsolateToken]);
+
+    receivePort.listen((message) {
+      if (message is String) {
+        artwork.localImagePath = message;
+        _favoritesBox.put(artwork.id, artwork);
+        print("Imagen guardada exitosamente en Hive para ${artwork.name}");
+      }
+    });
+  }
+
+  static Future<void> _downloadImageInIsolate(List args) async {
+    String imageUrl = args[0];
+    String artworkId = args[1];
+    SendPort sendPort = args[2];
+    RootIsolateToken rootIsolateToken = args[3];
+
+    BackgroundIsolateBinaryMessenger.ensureInitialized(rootIsolateToken); // Inicializar antes de usar plugins
+
+    try {
+      print("Intentando descargar imagen desde $imageUrl");
+      final response = await http.get(Uri.parse(imageUrl));
+      if (response.statusCode == 200) {
+        final directory = await getApplicationDocumentsDirectory();
+        final imagePath = '${directory.path}/$artworkId.jpg';
+        final imageFile = File(imagePath);
+
+        await imageFile.writeAsBytes(response.bodyBytes);
+
+        if (await imageFile.exists()) {
+          print("Imagen guardada en: $imagePath");
+          sendPort.send(imagePath);
+        } else {
+          print("Error: No se pudo guardar la imagen en $imagePath");
+        }
+      } else {
+        print("Error al descargar la imagen: código de estado ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error al intentar descargar y guardar la imagen: $e");
+    }
+  }
+
   Future<void> _saveFavoritesToLocal(List<Artwork> favorites) async {
-    await _favoritesBox.clear();  // Limpiar datos antiguos
-    for (var artwork in favorites) {
-      await _favoritesBox.add(artwork);  // Guardar nuevos favoritos en Hive
+    final directory = await getApplicationDocumentsDirectory();
+    final oldImages = directory.listSync().where((file) => file.path.endsWith('.jpg'));
+    for (var file in oldImages) {
+      try {
+        await file.delete();
+        print("Imagen borrada: ${file.path}");
+      } catch (e) {
+        print("Error al borrar la imagen ${file.path}: $e");
+      }
     }
-    print('Favorites saved to local storage: ${favorites.length} items'); // Mensaje de confirmación
+
+    await _favoritesBox.clear();
+
+    for (var artwork in favorites) {
+      artwork.localImagePath = await _downloadImage(artwork.image, artwork.id.toString());
+      print("Ruta de imagen descargada para ${artwork.name}: ${artwork.localImagePath}");
+      await _favoritesBox.put(artwork.id, artwork);
+    }
+    print('Favoritos guardados en almacenamiento local: ${favorites.length} elementos');
   }
 
+  Future<String?> _downloadImage(String imageUrl, String artworkId) async {
+    try {
+      print("Intentando descargar imagen desde $imageUrl");
+
+      final response = await http.get(Uri.parse(imageUrl));
+      if (response.statusCode == 200) {
+        final directory = await getApplicationDocumentsDirectory();
+        final imagePath = '${directory.path}/$artworkId.jpg';
+        final imageFile = File(imagePath);
+
+        await imageFile.writeAsBytes(response.bodyBytes);
+
+        if (await imageFile.exists()) {
+          print("Imagen guardada en: $imagePath");
+          return imagePath;
+        } else {
+          print("Error: No se pudo guardar la imagen en $imagePath");
+          return null;
+        }
+      } else {
+        print("Error al descargar la imagen: código de estado ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("Error al intentar descargar y guardar la imagen: $e");
+      return null;
+    }
+  }
 }
