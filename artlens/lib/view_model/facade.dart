@@ -228,8 +228,13 @@ class AppFacade {
   }
 
   // Analytic engine
-  void fetchRecommendationsByUserId(int id) {
-    recommendationsCubit.fetchRecommendationsByUserId(id);
+  void fetchRecommendationsByUserId() async {
+    final userId = await _getUserId();
+    if (userId != null) {
+      recommendationsCubit.fetchRecommendationsByUserId(userId);
+    } else {
+      recommendationsCubit.clearRecommendations();
+    }
   }
 
   void fetchSpotlightArtworks() {

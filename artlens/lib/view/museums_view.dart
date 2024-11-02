@@ -19,7 +19,7 @@ class MuseumsView extends StatefulWidget {
 
 class _MuseumsViewState extends State<MuseumsView> {
   bool isOnline = true;
-  bool isFetch = false;
+  bool isFetched = false;
 
   @override
   void initState() {
@@ -31,10 +31,10 @@ class _MuseumsViewState extends State<MuseumsView> {
     final connectivityResult = await Connectivity().checkConnectivity();
     isOnline = connectivityResult[0] != ConnectivityResult.none;
     if (isOnline) {
-      isFetch = true;
+      isFetched = true;
       widget.appFacade.fetchAllMuseums();
     } else {
-      if (isFetch) {
+      if (isFetched) {
         setState(() {
           isOnline;
         });
@@ -57,9 +57,9 @@ class _MuseumsViewState extends State<MuseumsView> {
       );
     } else if (state is ConnectivityOnline) {
 
-      if (!isFetch) {
+      if (!isFetched) {
         Future.delayed(const Duration(seconds: 5), () {
-          isFetch = true;
+          isFetched = true;
           widget.appFacade.fetchAllMuseums();
         });
       } else {

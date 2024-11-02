@@ -113,7 +113,9 @@ class _FavoritesViewState extends State<FavoritesView> {
                                 context,
                                 Routes.artwork,
                                 arguments: {'id': artwork.id},
-                              );
+                              ).then((_) {
+                                widget.appFacade.fetchFavorites();
+                              });
                             } else {
                               _showNoConnectionMessage(context);
                             }
