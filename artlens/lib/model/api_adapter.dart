@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
@@ -9,6 +10,7 @@ import '../entities/comment.dart';
 import '../entities/museum.dart';
 
 class ApiAdapter {
+
   final String baseUrl = 'http://192.168.5.105:8000';
 
   //Cache
@@ -24,22 +26,31 @@ class ApiAdapter {
 
   static ApiAdapter get instance => _instance;
 
-  // Method for POST requests
-  Future<http.Response> post(String endpoint, Map<String, dynamic> body) async {
+  // Método para realizar solicitudes POST desde un Isolate
+  static Future<http.Response> _postIsolate(Map<String, dynamic> params) {
+    final String endpoint = params['endpoint'];
+    final Map<String, dynamic> body = params['body'];
+    final String baseUrl = 'http://192.168.20.181:8000'; 
+
     final url = Uri.parse('$baseUrl$endpoint');
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(body),
-      );
-      return response;
-    } catch (e) {
-      throw Exception('Failed to post data: $e');
-    }
+
+    // Realiza la solicitud POST
+    return http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
   }
 
-  // Method for GET requests
+  // Método para solicitudes POST que llama al método del Isolate
+  Future<http.Response> post(String endpoint, Map<String, dynamic> body) {
+    return compute(_postIsolate, {
+      'endpoint': endpoint,
+      'body': body,
+    });
+  }
+
+  // Método para solicitudes GET
   Future<http.Response> get(String endpoint) async {
     final url = Uri.parse('$baseUrl$endpoint');
     try {
@@ -50,7 +61,7 @@ class ApiAdapter {
     }
   }
 
-  // Method for DELETE requests
+  // Método para solicitudes DELETE
   Future<http.Response> delete(String endpoint) async {
     final url = Uri.parse('$baseUrl$endpoint');
     try {
@@ -252,20 +263,15 @@ class ApiAdapter {
   }
 
   Future<List<Artwork>> fetchSpotlightArtworks() async {
-    // Check if the data is locally available and fresh
     if (_shouldUseLocalData()) {
       return _spotlightArtworksBox.values.toList();
     }
 
-    // Fetch from the backend if local data is outdated
     final response = await get('/analytic_engine/spotlights/');
     if (response.statusCode == 200) {
       List<dynamic> jsonData = jsonDecode(response.body);
       List<Artwork> artworks = jsonData.map((data) => Artwork.fromJson(data)).toList();
-
-      // Cache the fetched data
       await _saveSpotlightArtworksToLocalStorage(artworks);
-
       return artworks;
     } else {
       throw Exception('Failed to load spotlight artworks: ${response.reasonPhrase}');
@@ -273,29 +279,20 @@ class ApiAdapter {
   }
 
   bool _shouldUseLocalData() {
-    // Retrieve the last refresh date from the metadata box
     final lastRefreshDateStr = _metadataBox.get('lastRefreshDate');
     if (lastRefreshDateStr != null) {
       final lastRefreshDate = DateFormat('yyyy-MM-dd').parse(lastRefreshDateStr);
       final currentDate = DateTime.now();
-      // Use local data if it's within the 5-day refresh window
       return currentDate.difference(lastRefreshDate).inDays < 5;
     }
-    // If no refresh date exists, fetch from network
     return false;
   }
 
-  // Save artworks to local storage and update the refresh date
   Future<void> _saveSpotlightArtworksToLocalStorage(List<Artwork> artworks) async {
-    // Clear old data in the box
     await _spotlightArtworksBox.clear();
-
-    // Save new data to the box
     for (Artwork artwork in artworks) {
       await _spotlightArtworksBox.add(artwork);
     }
-
-    // Update the last refresh date in the metadata box
     final currentDateStr = DateFormat('yyyy-MM-dd').format(DateTime.now());
     await _metadataBox.put('lastRefreshDate', currentDateStr);
   }

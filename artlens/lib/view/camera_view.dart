@@ -24,6 +24,7 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
   late final ArtworkService artworkService;
   bool isOnline = true;
   bool isFetched = false;
+  bool isOfflineMessageShown = false;
 
   @override
   void initState() {
@@ -93,10 +94,19 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
 
     controller.scannedDataStream.listen((scanData) async {
       if (!isOnline) {
-        // Si no hay conexión, mostrar mensaje y no proceder con el escaneo
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No internet connection. QR scan disabled.')),
-        );
+        if (!isOfflineMessageShown) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No internet connection. QR scan disabled.')),
+          );
+          isOfflineMessageShown = true;
+
+          // Espera 3 segundos antes de permitir que el mensaje se vuelva a mostrar
+          Future.delayed(Duration(seconds: 3), () {
+            setState(() {
+              isOfflineMessageShown = false;
+            });
+          });
+        }
         return;
       }
       // Proceder con el escaneo solo si hay conexión
