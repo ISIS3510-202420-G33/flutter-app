@@ -28,13 +28,14 @@ class ArtworkAdapter extends TypeAdapter<Artwork> {
       isSpotlight: fields[8] as bool,
       museum: fields[9] as int,
       artist: fields[10] as int,
+      localImagePath: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, Artwork obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -56,7 +57,9 @@ class ArtworkAdapter extends TypeAdapter<Artwork> {
       ..writeByte(9)
       ..write(obj.museum)
       ..writeByte(10)
-      ..write(obj.artist);
+      ..write(obj.artist)
+      ..writeByte(11)
+      ..write(obj.localImagePath);
   }
 
   @override

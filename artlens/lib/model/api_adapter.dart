@@ -7,7 +7,7 @@ import '../entities/artwork.dart';
 import '../entities/museum.dart';
 
 class ApiAdapter {
-  final String baseUrl = 'http://192.168.11.12:8000';
+  final String baseUrl = 'http://192.168.5.105:8000';
   final Box<Artwork> _spotlightArtworksBox = Hive.box('spotlightArtworks');
   final Box _metadataBox = Hive.box('metadata');
 
