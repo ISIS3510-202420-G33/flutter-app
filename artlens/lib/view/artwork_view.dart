@@ -7,6 +7,7 @@ import '../view_model/comments_cubit.dart';
 import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
 import '../view_model/favorites_cubit.dart';
+import '../view_model/isFavorite_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
 import '../main.dart';
@@ -35,6 +36,9 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   bool _isForumOpen = false;
   bool _isPlaying = false;
   bool _isLoading = true;
+  bool _isFavorited = false;
+  bool? _isSpotlight;
+  DateTime? _entryTime;
 
   final TextEditingController _commentController = TextEditingController();
   final FlutterTts flutterTts = FlutterTts();
@@ -44,6 +48,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   void initState() {
     super.initState();
     _artworkId = widget.id;
+    _entryTime = DateTime.now();
 
     // Configura los parámetros iniciales de TTS
     flutterTts.setLanguage('en-US');
@@ -94,15 +99,10 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
 
   @override
   void dispose() {
+    _sendArtworkExitData();
     routeObserver.unsubscribe(this);
     flutterTts.stop();
     super.dispose();
-  }
-
-  @override
-  void didPopNext() {
-    super.didPopNext();
-    _initializeArtwork();
   }
 
   // Método para manejar la navegación
@@ -122,8 +122,10 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   void _onLikePressed(bool currentLikedStatus) async {
     try {
       if (currentLikedStatus) {
+        _isFavorited = false;
         await widget.appFacade.removeFavorite(_artworkId!);
       } else {
+        _isFavorited = true;
         await widget.appFacade.addFavorite(_artworkId!);
       }
 
@@ -200,6 +202,22 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     });
   }
 
+  void _sendArtworkExitData() async {
+    if (_entryTime != null) {
+      final exitTime = DateTime.now();
+      final timeSpent = exitTime.difference(_entryTime!).inSeconds;
+
+      // Send data to Firestore
+      await _firestoreService.addDocument('BQ42', {
+        'artworkId': _artworkId,
+        'isSpotlight': _isSpotlight,
+        'timeSpentInView': timeSpent,
+        'isFavorited': _isFavorited,
+        'exitTime': exitTime,
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -217,6 +235,8 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
             final artwork = state.artwork;
             final artist = state.artist;
             final museum = state.museum;
+
+            _isSpotlight = artwork?.isSpotlight;
 
             return ScrollConfiguration(
               behavior: NoGlowScrollBehavior(),
@@ -248,8 +268,8 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                               ),
                             ),
                             if (widget.appFacade.isLoggedIn())
-                              BlocBuilder<FavoritesCubit, FavoritesState>(
-                                bloc: widget.appFacade.favoritesCubit,
+                              BlocBuilder<IsFavoriteCubit, IsFavoriteState>(
+                                bloc: widget.appFacade.isFavoriteCubit,
                                 builder: (context, likeState) {
                                   bool isLiked = false;
                                   if (likeState is IsLikedLoaded) {

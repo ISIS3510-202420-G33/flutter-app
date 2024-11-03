@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../model/firestore_service.dart';
 import '../view_model/connectivity_cubit.dart';
 import '../view_model/facade.dart';
 import '../view_model/spotlight_artworks_cubit.dart';
@@ -33,6 +34,7 @@ class _TrendingViewState extends State<TrendingView> {
   bool isOnline = true;
   bool isFetched = false;
   int _selectedIndex = 2;
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {

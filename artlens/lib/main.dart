@@ -1,4 +1,5 @@
 import 'package:artlens/view_model/connectivity_cubit.dart';
+import 'package:artlens/view_model/isFavorite_cubit.dart';
 import 'package:artlens/view_model/museum_artwork_cubit.dart';
 import 'package:artlens/view_model/search_cubit.dart';
 import 'package:artlens/view_model/spotlight_artworks_cubit.dart';
@@ -65,6 +66,7 @@ void main() async {
   final searchCubit=SearchCubit(ArtworkService(), MuseumService(), ArtistService());
   final museumArtworkCubit = MuseumArtworkCubit(ArtworkService());
   final connectivityCubit = ConnectivityCubit();
+  final isFavoriteCubit = IsFavoriteCubit(userService);
 
 
   final appFacade = AppFacade(
@@ -81,7 +83,7 @@ void main() async {
     searchCubit,
     museumArtworkCubit,
     connectivityCubit,
-
+    isFavoriteCubit
   );
 
   // Load saved session, if any
