@@ -17,6 +17,7 @@ import '../view_model/map_cubit.dart';
 import '../model/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'isFavorite_cubit.dart';
 import 'museum_artwork_cubit.dart';
 
 class AppFacade {
@@ -33,6 +34,7 @@ class AppFacade {
   final SearchCubit searchCubit;
   final MuseumArtworkCubit museumArtworkCubit;
   final ConnectivityCubit connectivityCubit;
+  final IsFavoriteCubit isFavoriteCubit;
 
   AppFacade(
       this.artworkCubit,
@@ -47,8 +49,11 @@ class AppFacade {
       this.recommendationsCubit,
       this.searchCubit,
       this.museumArtworkCubit,
-      this.connectivityCubit
+      this.connectivityCubit,
+      this.isFavoriteCubit
       );
+
+  //This is creating all cubits at once. This could have an impact in memory consumption when starting the app
 
   // Métodos para manejar la búsqueda
   void fetchInitialSearchData() {
@@ -193,7 +198,7 @@ class AppFacade {
   void isArtworkLiked(int artworkId) async {
     final userId = await _getUserId();
     if (userId != null) {
-      favoritesCubit.isArtworkLiked(userId, artworkId);
+      isFavoriteCubit.isArtworkLiked(userId, artworkId);
     }
   }
 

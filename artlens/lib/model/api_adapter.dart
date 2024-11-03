@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../entities/artist.dart';
 import '../entities/artwork.dart';
+import '../entities/museum.dart';
 
 class ApiAdapter {
   final String baseUrl = 'http://192.168.11.12:8000';
@@ -91,6 +92,16 @@ class ApiAdapter {
       return artworks;
     } else {
       throw Exception('Failed to load spotlight artworks: ${response.reasonPhrase}');
+    }
+  }
+
+  Future<List<Museum>> fetchAllMuseums() async {
+    final response = await get('/museums');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Museum.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load museums: ${response.reasonPhrase}');
     }
   }
 
