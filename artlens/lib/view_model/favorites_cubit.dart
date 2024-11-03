@@ -14,12 +14,6 @@ class FavoritesLoaded extends FavoritesState {
   FavoritesLoaded(this.favorites);
 }
 
-class IsLikedLoaded extends FavoritesState {
-  final bool isLiked;
-
-  IsLikedLoaded(this.isLiked);
-}
-
 class Error extends FavoritesState {
   final String message;
 
@@ -66,15 +60,6 @@ class FavoritesCubit extends Cubit<FavoritesState> {
       emit(FavoritesLoaded(updatedFavorites));
     } catch (e) {
       emit(Error('Error adding favorite'));
-    }
-  }
-
-  Future<void> isArtworkLiked(int userId, int artworkId) async {
-    try {
-      final isLiked = await userService.isArtworkFavorite(userId, artworkId);
-      emit(IsLikedLoaded(isLiked));
-    } catch (e) {
-      emit(Error('Error getting if artwork is liked'));
     }
   }
 }
