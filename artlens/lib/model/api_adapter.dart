@@ -1,13 +1,20 @@
 import 'dart:convert';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import '../entities/artist.dart';
 import '../entities/artwork.dart';
+import '../entities/comment.dart';
 import '../entities/museum.dart';
 
 class ApiAdapter {
   final String baseUrl = 'http://192.168.5.105:8000';
+
+  //Cache
+  final CacheManager _cacheManager = DefaultCacheManager();
+
+  //Local Storage
   final Box<Artwork> _spotlightArtworksBox = Hive.box('spotlightArtworks');
   final Box _metadataBox = Hive.box('metadata');
 
@@ -54,6 +61,125 @@ class ApiAdapter {
     }
   }
 
+  /// Artwork
+
+  Future<Artwork> fetchArtworkById(int id) async {
+    // Cache key to store artwork data JC
+    final cacheKey = 'artwork_$id';
+    final cachedFile = await _cacheManager.getFileFromCache(cacheKey);
+
+
+    if (cachedFile != null) {
+      // If the file exists in the cache, use it
+      final cachedData = await cachedFile.file.readAsString();
+      final decodedData = jsonDecode(cachedData);
+
+      if (decodedData is List && decodedData.isNotEmpty) {
+        final artworkData = Map<String, dynamic>.from(decodedData[0]);
+        return Artwork.fromJson(artworkData);
+      } else {
+        throw Exception('Invalid cached data format for artwork');
+      }
+    } else {
+      // If not in cache, fetch from the network
+      final response = await get('/artworks/$id');
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonResponse = jsonDecode(response.body);
+        final artwork = Artwork.fromJson(Map<String, dynamic>.from(jsonResponse[0]));
+
+        // Cache the response for future use
+        await _cacheManager.putFile(
+          cacheKey,
+          response.bodyBytes,
+          fileExtension: 'json',
+        );
+
+        return artwork;
+      } else {
+        throw Exception('Failed to load artwork: ${response.reasonPhrase}');
+      }
+    }
+  }
+
+  Future<List<Comment>> fetchCommentsByArtworkId(int id) async {
+    final response = await get('/artworks/comments/$id');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Comment.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load comments: ${response.reasonPhrase}');
+    }
+  }
+
+  Future<List<Artwork>> fetchArtworksByArtistId(int id) async {
+    final response = await get('/artworks/artist/$id');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Artwork.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load comments: ${response.reasonPhrase}');
+    }
+  }
+
+  Future<List<Artwork>> fetchArtworksByMuseumId(int museumId) async {
+    final response = await get('/artworks/museum/$museumId');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Artwork.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load artworks for museum: ${response.reasonPhrase}');
+    }
+  }
+
+  Future<List<Artwork>> fetchAllArtworks() async {
+    final response = await get('/artworks');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Artwork.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load artworks: ${response.reasonPhrase}');
+    }
+  }
+
+  /// Artist
+
+  Future<Artist> fetchArtistById(int id) async {
+    // Cache key to store artist data JC
+    final cacheKey = 'artist_$id';
+    final cachedFile = await _cacheManager.getFileFromCache(cacheKey);
+
+    if (cachedFile != null) {
+      // If the file exists in the cache, use it
+      final cachedData = await cachedFile.file.readAsString();
+      final decodedData = jsonDecode(cachedData);
+
+      if (decodedData is List && decodedData.isNotEmpty) {
+        final artistData = Map<String, dynamic>.from(decodedData[0]);
+        return Artist.fromJson(artistData);
+      } else {
+        throw Exception('Invalid cached data format for artist');
+      }
+    } else {
+      // If not in cache, fetch from the network
+      final response = await get('/artists/$id');
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonResponse = jsonDecode(response.body);
+        final artist = Artist.fromJson(Map<String, dynamic>.from(jsonResponse[0]));
+
+        // Cache the response for future use
+        await _cacheManager.putFile(
+          cacheKey,
+          response.bodyBytes,
+          fileExtension: 'json',
+        );
+
+        return artist;
+      } else {
+        throw Exception('Failed to load artist: ${response.reasonPhrase}');
+      }
+    }
+  }
+
   Future<List<Artist>> fetchAllArtists() async {
     final response = await get('/artists');
     if (response.statusCode == 200) {
@@ -63,6 +189,57 @@ class ApiAdapter {
       throw Exception('Failed to load artists: ${response.reasonPhrase}');
     }
   }
+
+  ///Museum
+
+  Future<Museum> fetchMuseumById(int id) async {
+    // Cache key to store museum data JC
+    final cacheKey = 'museum_$id';
+    final cachedFile = await _cacheManager.getFileFromCache(cacheKey);
+
+    if (cachedFile != null) {
+      // If the file exists in the cache, use it
+      final cachedData = await cachedFile.file.readAsString();
+      final decodedData = jsonDecode(cachedData);
+
+      if (decodedData is List && decodedData.isNotEmpty) {
+        final museumData = Map<String, dynamic>.from(decodedData[0]);
+        return Museum.fromJson(museumData);
+      } else {
+        throw Exception('Invalid cached data format for museum');
+      }
+    } else {
+      // If not in cache, fetch from the network
+      final response = await get('/museums/$id');
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonResponse = jsonDecode(response.body);
+        final museum = Museum.fromJson(Map<String, dynamic>.from(jsonResponse[0]));
+
+        // Cache the response for future use
+        await _cacheManager.putFile(
+          cacheKey,
+          response.bodyBytes,
+          fileExtension: 'json',
+        );
+
+        return museum;
+      } else {
+        throw Exception('Failed to load museum: ${response.reasonPhrase}');
+      }
+    }
+  }
+
+  Future<List<Museum>> fetchAllMuseums() async {
+    final response = await get('/museums');
+    if (response.statusCode == 200) {
+      List<dynamic> jsonData = jsonDecode(response.body);
+      return jsonData.map((data) => Museum.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load museums: ${response.reasonPhrase}');
+    }
+  }
+
+  /// Analytic Engine
 
   Future<List<Artwork>> fetchRecommendationsByUserId(int id) async {
     final response = await get('/analytic_engine/recommend/$id');
@@ -92,16 +269,6 @@ class ApiAdapter {
       return artworks;
     } else {
       throw Exception('Failed to load spotlight artworks: ${response.reasonPhrase}');
-    }
-  }
-
-  Future<List<Museum>> fetchAllMuseums() async {
-    final response = await get('/museums');
-    if (response.statusCode == 200) {
-      List<dynamic> jsonData = jsonDecode(response.body);
-      return jsonData.map((data) => Museum.fromJson(data)).toList();
-    } else {
-      throw Exception('Failed to load museums: ${response.reasonPhrase}');
     }
   }
 
