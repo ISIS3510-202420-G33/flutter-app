@@ -11,7 +11,7 @@ import '../entities/museum.dart';
 
 class ApiAdapter {
 
-  final String baseUrl = 'http://192.168.5.105:8000';
+  final String baseUrl = 'http://192.168.20.181:8000';
 
   //Cache
   final CacheManager _cacheManager = DefaultCacheManager();
@@ -30,7 +30,7 @@ class ApiAdapter {
   static Future<http.Response> _postIsolate(Map<String, dynamic> params) {
     final String endpoint = params['endpoint'];
     final Map<String, dynamic> body = params['body'];
-    final String baseUrl = 'http://192.168.20.181:8000'; 
+    final String baseUrl = params['baseUrl'];
 
     final url = Uri.parse('$baseUrl$endpoint');
 
@@ -45,6 +45,7 @@ class ApiAdapter {
   // Método para solicitudes POST que llama al método del Isolate
   Future<http.Response> post(String endpoint, Map<String, dynamic> body) {
     return compute(_postIsolate, {
+      'baseUrl': baseUrl,
       'endpoint': endpoint,
       'body': body,
     });
