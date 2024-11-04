@@ -6,7 +6,6 @@ import '../routes.dart';
 import '../view_model/comments_cubit.dart';
 import '../view_model/facade.dart';
 import '../view_model/artwork_cubit.dart';
-import '../view_model/favorites_cubit.dart';
 import '../view_model/isFavorite_cubit.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../widgets/custom_app_bar.dart';
@@ -39,6 +38,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   bool _isFavorited = false;
   bool? _isSpotlight;
   DateTime? _entryTime;
+  bool _isFavoritedInitialized = false;
 
   final TextEditingController _commentController = TextEditingController();
   final FlutterTts flutterTts = FlutterTts();
@@ -119,18 +119,19 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
     });
   }
 
-  void _onLikePressed(bool currentLikedStatus) async {
+  void _onLikePressed() async {
     try {
-      if (currentLikedStatus) {
-        _isFavorited = false;
-        await widget.appFacade.removeFavorite(_artworkId!);
+      if (_isFavorited) {
+        setState(() {
+          _isFavorited = false;
+        });
+        widget.appFacade.removeFavorite(_artworkId!);
       } else {
-        _isFavorited = true;
-        await widget.appFacade.addFavorite(_artworkId!);
+        setState(() {
+          _isFavorited = true;
+        });
+        widget.appFacade.addFavorite(_artworkId!);
       }
-
-      // Re-fetch or update the state to reflect the change
-      widget.appFacade.isArtworkLiked(widget.id);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error updating like status')),
@@ -271,15 +272,15 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                               BlocBuilder<IsFavoriteCubit, IsFavoriteState>(
                                 bloc: widget.appFacade.isFavoriteCubit,
                                 builder: (context, likeState) {
-                                  bool isLiked = false;
-                                  if (likeState is IsLikedLoaded) {
-                                    isLiked = likeState.isLiked;
+                                  if (likeState is IsLikedLoaded && !_isFavoritedInitialized) {
+                                    _isFavorited = likeState.isLiked;
+                                    _isFavoritedInitialized = true;
                                   }
                                   return IconButton(
                                     icon: Container(
                                       padding: const EdgeInsets.all(8.0),
                                       decoration: BoxDecoration(
-                                        color: isLiked
+                                        color: _isFavorited
                                             ? theme.colorScheme.secondary
                                             : Colors.black,
                                         shape: BoxShape.circle,
@@ -289,7 +290,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                                       ),
                                     ),
                                     onPressed: () {
-                                      _onLikePressed(isLiked);
+                                      _onLikePressed();
                                     },
                                   );
                                 },
