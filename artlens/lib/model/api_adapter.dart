@@ -11,7 +11,7 @@ import '../entities/museum.dart';
 
 class ApiAdapter {
 
-  final String baseUrl = 'http://192.168.20.181:8000';
+  final String baseUrl = 'http://192.168.5.105:8000';
 
   //Cache
   final CacheManager _cacheManager = DefaultCacheManager();
