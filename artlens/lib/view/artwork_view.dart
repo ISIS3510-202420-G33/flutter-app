@@ -31,6 +31,7 @@ class ArtworkView extends StatefulWidget {
 class _ArtworkViewState extends State<ArtworkView> with RouteAware {
   int? _artworkId;
   String? _documentId;
+  String? _artworkName;
   int _selectedIndex = 1;
   bool _isForumOpen = false;
   bool _isPlaying = false;
@@ -210,7 +211,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
 
       // Send data to Firestore
       await _firestoreService.addDocument('BQ42', {
-        'artworkId': _artworkId,
+        'artworkId': _artworkName,
         'isSpotlight': _isSpotlight,
         'timeSpentInView': timeSpent,
         'isFavorited': _isFavorited,
@@ -238,6 +239,7 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
             final museum = state.museum;
 
             _isSpotlight = artwork?.isSpotlight;
+            _artworkName = artwork?.name;
 
             return ScrollConfiguration(
               behavior: NoGlowScrollBehavior(),
