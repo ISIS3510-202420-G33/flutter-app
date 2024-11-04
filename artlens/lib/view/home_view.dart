@@ -78,9 +78,6 @@ class _HomeViewState extends State<HomeView> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16.0),
                         child: FakeSearchBar(
-                          onTap: () {
-                            //Navigator.pushNamed(context, Routes.search); // Navegar a la vista de búsqueda
-                          },
                         ),
                       ),
                       Padding(
