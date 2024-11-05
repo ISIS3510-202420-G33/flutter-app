@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../model/firestore_service.dart';
 import '../view_model/connectivity_cubit.dart';
 import '../view_model/facade.dart';
 import '../view_model/spotlight_artworks_cubit.dart';
@@ -34,7 +35,6 @@ class _TrendingViewState extends State<TrendingView> {
   bool isOnline = true;
   bool isFetched = false;
   int _selectedIndex = 2;
-  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
@@ -232,6 +232,9 @@ class _TrendingViewState extends State<TrendingView> {
 
   // Helper method to build artwork tile
   Widget _buildArtworkTile(Artwork artwork) {
+    final localImagePath = artwork.localImagePath;
+    final localImageExists = localImagePath != null && File(localImagePath).existsSync();
+
     return GestureDetector(
       onTap: isOnline
           ? () {
@@ -247,11 +250,23 @@ class _TrendingViewState extends State<TrendingView> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.network(
+              // Check if there's a local image, otherwise use the network image
+              localImageExists
+                  ? Image.file(
+                File(localImagePath!),
+                height: 100,
+                width: 100,
+                fit: BoxFit.cover,
+              )
+                  : Image.network(
                 artwork.image,
                 height: 100,
                 width: 100,
                 fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  print("Error loading network image for ${artwork.name}");
+                  return Icon(Icons.image_not_supported, size: 100);
+                },
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -277,4 +292,5 @@ class _TrendingViewState extends State<TrendingView> {
       ),
     );
   }
+
 }

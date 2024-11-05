@@ -1,6 +1,5 @@
 import '../entities/artwork.dart';
 import '../model/api_adapter.dart';
-import '../entities/comment.dart';
 
 class ArtworkService {
   static final ArtworkService _instance = ArtworkService._internal();
@@ -14,10 +13,6 @@ class ArtworkService {
 
   Future<Artwork> fetchArtworkById(int id) async {
     return await apiAdapter.fetchArtworkById(id);
-  }
-
-  Future<List<Comment>> fetchCommentsByArtworkId(int id) async {
-    return await apiAdapter.fetchCommentsByArtworkId(id);
   }
 
   Future<List<Artwork>> fetchArtworksByArtistId(int id) async {

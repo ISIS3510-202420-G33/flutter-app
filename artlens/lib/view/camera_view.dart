@@ -7,7 +7,6 @@ import '../widgets/custom_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/firestore_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import '../view_model/connectivity_cubit.dart';
 
 
 class CameraPreviewScreen extends StatefulWidget {

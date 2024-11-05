@@ -20,7 +20,6 @@ import 'package:artlens/model/artwork_service.dart';
 import 'package:artlens/model/analytic_engine_service.dart';
 import 'package:artlens/model/artist_service.dart';
 import 'package:artlens/model/museum_service.dart';
-import 'package:artlens/model/map_service.dart';
 import 'package:artlens/model/comments_service.dart';
 import 'package:artlens/model/user_service.dart';
 import 'package:artlens/model/firestore_service.dart';
@@ -60,7 +59,7 @@ void main() async {
   final authCubit = AuthCubit();
   final userService = UserService();
   final favoritesCubit = FavoritesCubit(userService);
-  final mapCubit = MapCubit(MapService());
+  final mapCubit = MapCubit(AnalyticEngineService());
   final spotlightArtworksCubit = SpotlightArtworksCubit(AnalyticEngineService());
   final recommendationsCubit = RecommendationsCubit(AnalyticEngineService());
   final searchCubit=SearchCubit(ArtworkService(), MuseumService(), ArtistService());
