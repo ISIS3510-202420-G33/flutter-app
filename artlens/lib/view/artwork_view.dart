@@ -274,6 +274,13 @@ class _ArtworkViewState extends State<ArtworkView> with RouteAware {
                               BlocBuilder<IsFavoriteCubit, IsFavoriteState>(
                                 bloc: widget.appFacade.isFavoriteCubit,
                                 builder: (context, likeState) {
+
+                                  if (likeState is IsFavoriteLoading) {
+                                    return const Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+
                                   if (likeState is IsLikedLoaded && !_isFavoritedInitialized) {
                                     _isFavorited = likeState.isLiked;
                                     _isFavoritedInitialized = true;
