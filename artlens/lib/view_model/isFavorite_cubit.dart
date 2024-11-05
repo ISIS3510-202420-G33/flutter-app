@@ -26,6 +26,7 @@ class IsFavoriteCubit extends Cubit<IsFavoriteState> {
 
   Future<void> isArtworkLiked(int userId, int artworkId) async {
     try {
+      emit(IsFavoriteLoading());
       final isLiked = await userService.isArtworkFavorite(userId, artworkId);
       emit(IsLikedLoaded(isLiked));
     } catch (e) {
