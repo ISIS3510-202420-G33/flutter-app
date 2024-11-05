@@ -1,5 +1,5 @@
-import 'dart:convert';
 import '../entities/artwork.dart';
+import '../entities/museum.dart';
 import '../model/api_adapter.dart';
 
 class AnalyticEngineService {
@@ -18,5 +18,9 @@ class AnalyticEngineService {
 
   Future<List<Artwork>> fetchSpotlightArtworks() async {
     return await apiAdapter.fetchSpotlightArtworks();
+  }
+
+  Future<List<Museum>> fetchMuseums(double latActual, double longActual) async {
+    return await apiAdapter.fetchMuseums(latActual, longActual);
   }
 }

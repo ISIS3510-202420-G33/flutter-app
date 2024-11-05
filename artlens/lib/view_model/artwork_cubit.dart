@@ -3,12 +3,10 @@ import 'package:bloc/bloc.dart';
 import '../entities/artwork.dart';
 import '../entities/artist.dart';
 import '../entities/museum.dart';
-import '../entities/comment.dart';
 import '../model/artwork_service.dart';
 import '../model/artist_service.dart';
 import '../model/museum_service.dart';
 import '../model/firestore_service.dart';
-import '../model/user_service.dart';
 
 abstract class ArtworkState {}
 
