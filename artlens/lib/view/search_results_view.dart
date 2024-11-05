@@ -8,6 +8,7 @@ import '../entities/museum.dart';
 import '../routes.dart';
 import '../widgets/custom_app_bar.dart';
 import '../model/firestore_service.dart'; // Import FirestoreService
+import 'package:connectivity_plus/connectivity_plus.dart'; // Importa el paquete de conectividad
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -17,6 +18,7 @@ class NoGlowScrollBehavior extends ScrollBehavior {
 }
 
 class SearchResultsView extends StatefulWidget {
+
   final String initialQuery;
   final AppFacade appFacade;
 
@@ -29,28 +31,93 @@ class SearchResultsView extends StatefulWidget {
 class _SearchResultsViewState extends State<SearchResultsView> {
   late TextEditingController _controller;
   final FirestoreService _firestoreService = FirestoreService(); // Instancia de FirestoreService
+  bool _isOnline = true;
 
   @override
   void initState() {
     super.initState();
+    _checkConnectivity();
     _controller = TextEditingController(text: widget.initialQuery);
     widget.appFacade.fetchInitialSearchData();
     widget.appFacade.filterSearchResults(widget.initialQuery);
   }
 
+
+  Future<void> _checkConnectivity() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    setState(() {
+      _isOnline = connectivityResult[0] != ConnectivityResult.none;
+    });
+
+    // Escucha los cambios de conectividad
+    Connectivity().onConnectivityChanged.listen((connectivityResult) {
+      setState(() {
+        _isOnline = connectivityResult[0] != ConnectivityResult.none;
+      });
+    });
+
+    if (!_isOnline) {
+      _showNoConnectionDialog();
+    } else {
+      widget.appFacade.fetchInitialSearchData();
+      widget.appFacade.filterSearchResults(widget.initialQuery);
+    }
+  }
+
+
+  void _showNoConnectionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Evita cerrar el diálogo al tocar fuera
+      builder: (context) {
+        return AlertDialog(
+          title: Text("No Internet Connection"),
+          content: Text("Please check your connection and try again."),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await Future.delayed(Duration(seconds: 2)); // Espera 2 segundos
+                await _checkConnectivity(); // Vuelve a verificar la conexión
+              },
+              child: Text("Retry"),
+            ),
+          ],
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(title: "SEARCH RESULTS", showProfileIcon: true, showBackArrow: true),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildSearchBar(),
-            const SizedBox(height: 16),
-            Expanded(child: _buildSearchResults()),
-          ],
-        ),
+      body: _isOnline ? _buildOnlineContent() : _buildOfflineMessage(),
+    );
+  }
+
+  Widget _buildOfflineMessage() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.cloud_off, size: 80, color: Colors.grey),
+          const SizedBox(height: 16),
+          const Text("You need internet connection", style: TextStyle(fontSize: 18)),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOnlineContent() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildSearchBar(),
+          const SizedBox(height: 16),
+          Expanded(child: _buildSearchResults()),
+        ],
       ),
     );
   }
@@ -108,7 +175,9 @@ class _SearchResultsViewState extends State<SearchResultsView> {
             ),
           );
         } else if (state is SearchError) {
-          return Center(child: Text('Error: ${state.message}'));
+          widget.appFacade.fetchInitialSearchData();
+          widget.appFacade.filterSearchResults(widget.initialQuery);
+          return Center(child: Text('Loading...'));
         } else {
           return const Center(child: Text("No results to display"));
         }

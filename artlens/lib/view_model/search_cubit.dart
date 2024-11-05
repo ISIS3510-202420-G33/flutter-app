@@ -48,51 +48,15 @@ class SearchCubit extends Cubit<SearchState> {
   Future<void> fetchAllData() async {
     emit(SearchLoading());
     try {
-      final artworks = await artworkService.fetchAllArtworks();
-      final artists = await artistService.fetchAllArtists();
-      final museums = await museumService.fetchAllMuseums();
-
-      final results = await compute(_processFetchedData, {
-        'artworks': artworks,
-        'artists': artists,
-        'museums': museums,
-      });
-
-      _allArtworks = (results['artworks'] as List).cast<Artwork>();
-      _allArtists = (results['artists'] as List).cast<Artist>();
-      _allMuseums = (results['museums'] as List).cast<Museum>();
+      _allArtworks = await artworkService.fetchAllArtworks();
+      _allArtists = await artistService.fetchAllArtists();
+      _allMuseums = await museumService.fetchAllMuseums();
 
       emit(SearchLoaded(artworks: _allArtworks, artists: _allArtists, museums: _allMuseums));
-
     } catch (e) {
       emit(SearchError('Error fetching data: ${e.toString()}'));
     }
   }
-
-  static Map<String, List<dynamic>> _processFetchedData(Map<String, List<dynamic>> data) {
-
-    List<Artwork> artworks = (data['artworks'] as List<Artwork>)
-        .where((artwork) => artwork.name.length > 5)
-        .toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
-
-    List<Artist> artists = (data['artists'] as List<Artist>)
-        .where((artist) => artist.name.length > 5)
-        .toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
-
-    List<Museum> museums = (data['museums'] as List<Museum>)
-        .where((museum) => museum.name.length > 5)
-        .toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
-
-    return {
-      'artworks': artworks,
-      'artists': artists,
-      'museums': museums,
-    };
-  }
-
 
   void filterData(String query) {
     if (query.isEmpty) {

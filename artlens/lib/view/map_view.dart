@@ -149,8 +149,9 @@ class _MapViewState extends State<MapView> {
                   ),
                 );
               } else if (connectivityState is ConnectivityOnline) {
-                getLocationUpdates();
                 _cameraToPosition(_currentP!);
+                getLocationUpdates();
+                fetchMuseums(_currentP!.latitude, _currentP!.longitude);
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Connection restored.'),
