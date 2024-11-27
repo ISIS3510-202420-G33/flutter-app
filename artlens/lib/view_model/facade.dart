@@ -13,7 +13,6 @@ import '../view_model/comments_cubit.dart';
 import '../view_model/map_cubit.dart';
 import '../model/user_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'isFavorite_cubit.dart';
 import 'museum_artwork_cubit.dart';
 
@@ -49,8 +48,6 @@ class AppFacade {
       this.connectivityCubit,
       this.isFavoriteCubit
       );
-
-  //This is creating all cubits at once. This could have an impact in memory consumption when starting the app
 
   // Métodos para manejar la búsqueda
   void fetchInitialSearchData() {
