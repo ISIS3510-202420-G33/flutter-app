@@ -4,11 +4,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/custom_app_bar.dart';
 import '../routes.dart';
 import '../widgets/custom_bottom_nav_bar.dart';
 import '../view_model/facade.dart';
 import '../view_model/connectivity_cubit.dart';
+import '../model/firestore_service.dart';
 
 class MapView extends StatefulWidget {
   final AppFacade appFacade;
@@ -25,6 +27,8 @@ class MapView extends StatefulWidget {
 class _MapViewState extends State<MapView> {
   final Location _locationController = Location();
   final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
+  final FirestoreService _firestoreService = FirestoreService();
+
   LatLng? _currentP;
   Set<Marker> _museumMarkers = {};
   int _selectedIndex = 0;
@@ -34,6 +38,7 @@ class _MapViewState extends State<MapView> {
   void initState() {
     super.initState();
     _initializeConnectivity();
+    _logMapViewOpened(); // Llamada para registrar el evento en Firestore
   }
 
   Future<void> _initializeConnectivity() async {
@@ -45,6 +50,23 @@ class _MapViewState extends State<MapView> {
       _listenToLocationChanges();
     }
   }
+
+  Future<void> _logMapViewOpened() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final username = prefs.getString('userName') ?? 'Unknown User';
+      final currentDateTime = DateTime.now();
+
+      await _firestoreService.addDocument('BQ362', {
+        'fecha2': currentDateTime,
+        'userID': username,
+      });
+      debugPrint('Map view event logged in Firestore');
+    } catch (e) {
+      debugPrint('Error logging map view event: $e');
+    }
+  }
+
 
   Future<void> _ensureLocationPermission() async {
     final serviceEnabled = await _locationController.serviceEnabled();
