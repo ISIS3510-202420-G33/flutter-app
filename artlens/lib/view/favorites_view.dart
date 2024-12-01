@@ -9,6 +9,7 @@ import '../entities/artwork.dart';
 import '../routes.dart';
 import '../view_model/facade.dart';
 import 'dart:io';
+import '../model/firestore_service.dart'; // Import FirestoreService
 
 class NoGlowScrollBehavior extends ScrollBehavior {
   @override
@@ -32,6 +33,7 @@ class FavoritesView extends StatefulWidget {
 class _FavoritesViewState extends State<FavoritesView> {
   int _selectedIndex = 2;
   Map<int, bool> isPressed = {}; // Map para controlar qué íconos han sido presionados
+  final FirestoreService _firestoreService = FirestoreService(); // Instancia de FirestoreService
 
   @override
   void initState() {
@@ -57,7 +59,7 @@ class _FavoritesViewState extends State<FavoritesView> {
 
   void _showNoConnectionMessage(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
+      const SnackBar(
         content: Text("Oops! It seems you're offline. Please check your connection."),
       ),
     );
@@ -87,6 +89,18 @@ class _FavoritesViewState extends State<FavoritesView> {
     print("=========================================");
   }
 
+  // Método para registrar acceso a Firestore
+  Future<void> _logArtworkAccess(Artwork artwork) async {
+    try {
+      await _firestoreService.addDocument('BQ333', {
+        'Date': DateTime.now(),
+        'Artwork': artwork.name,
+      });
+      print("Access to artwork '${artwork.name}' logged in Firestore.");
+    } catch (e) {
+      print("Error logging artwork access: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +113,7 @@ class _FavoritesViewState extends State<FavoritesView> {
           return BlocBuilder<FavoritesCubit, FavoritesState>(
             builder: (context, state) {
               if (state is FavoritesLoading) {
-                return Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator());
               }
 
               if (state is Error) {
@@ -107,7 +121,7 @@ class _FavoritesViewState extends State<FavoritesView> {
               }
 
               if (state is FavoritesLoaded && state.favorites.isEmpty) {
-                return Center(child: Text('No favorites found.'));
+                return const Center(child: Text('No favorites found.'));
               }
 
               if (state is FavoritesLoaded) {
@@ -136,13 +150,17 @@ class _FavoritesViewState extends State<FavoritesView> {
                         print("Network Image URL: ${artwork.image}");
 
                         return GestureDetector(
-                          onTap: () {
+                          onTap: () async {
                             if (isOnline) {
+                              // Navegar a la obra de arte
                               Navigator.pushNamed(
                                 context,
                                 Routes.artwork,
                                 arguments: {'id': artwork.id},
                               );
+
+                              // Registrar el acceso en Firestore
+                              await _logArtworkAccess(artwork);
                             } else {
                               _showNoConnectionMessage(context);
                             }
@@ -167,7 +185,7 @@ class _FavoritesViewState extends State<FavoritesView> {
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
                                       print("Error loading network image for ${artwork.name}");
-                                      return Icon(Icons.image_not_supported, size: 100);
+                                      return const Icon(Icons.image_not_supported, size: 100);
                                     },
                                   ),
                                   const SizedBox(width: 16),
@@ -226,7 +244,7 @@ class _FavoritesViewState extends State<FavoritesView> {
                 );
               }
 
-              return Center(child: const Text('No favorites available.'));
+              return const Center(child: Text('No favorites available.'));
             },
           );
         },
