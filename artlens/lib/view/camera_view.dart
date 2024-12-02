@@ -130,6 +130,11 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
               'Fecha': date,
               'Museo': museum,
             });
+
+            await _firestoreService.addDocument('BQScanQR', {
+              'fecha2': date,
+              'userID': username,
+            });
           } catch (e) {
             print('Error adding document to Firebase: $e');
           }
