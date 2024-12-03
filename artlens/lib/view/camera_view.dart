@@ -3,6 +3,7 @@ import 'package:qr_code_scanner/qr_code_scanner.dart';
 import '../entities/artwork.dart';
 import '../model/artwork_service.dart';
 import '../routes.dart';
+import '../view_model/facade.dart';
 import '../widgets/custom_app_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/firestore_service.dart';
@@ -10,6 +11,13 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 
 class CameraPreviewScreen extends StatefulWidget {
+  final AppFacade appFacade;
+
+  const CameraPreviewScreen({
+    Key? key,
+    required this.appFacade,
+  }) : super(key: key);
+
   @override
   _CameraPreviewScreenState createState() => _CameraPreviewScreenState();
 }
@@ -131,7 +139,7 @@ class _CameraPreviewScreenState extends State<CameraPreviewScreen> {
               'Museo': museum,
             });
 
-            await _firestoreService.addDocument('BQScanQR', {
+            widget.appFacade.addDocument('BQScanQR', {
               'fecha2': date,
               'userID': username,
             });

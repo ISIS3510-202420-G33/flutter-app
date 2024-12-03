@@ -4,6 +4,7 @@ import 'package:artlens/view_model/spotlight_artworks_cubit.dart';
 import 'package:artlens/view_model/recommendations_cubit.dart';
 import '../entities/user.dart';
 import '../entities/museum.dart';
+import '../model/firestore_service.dart';
 import '../view_model/artwork_cubit.dart';
 import '../view_model/artist_cubit.dart';
 import '../view_model/museum_cubit.dart';
@@ -31,6 +32,7 @@ class AppFacade {
   final MuseumArtworkCubit museumArtworkCubit;
   final ConnectivityCubit connectivityCubit;
   final IsFavoriteCubit isFavoriteCubit;
+  final FirestoreService firestoreService;
 
   AppFacade(
       this.artworkCubit,
@@ -46,7 +48,8 @@ class AppFacade {
       this.searchCubit,
       this.museumArtworkCubit,
       this.connectivityCubit,
-      this.isFavoriteCubit
+      this.isFavoriteCubit,
+      this.firestoreService
       );
 
   // Métodos para manejar la búsqueda
@@ -238,6 +241,11 @@ class AppFacade {
 
   void fetchSpotlightArtworks() {
     spotlightArtworksCubit.fetchSpotlightArtworks();
+  }
+
+  // Firebase
+  void addDocument(String collectionName, Map<String, dynamic> data) {
+    firestoreService.addDocument(collectionName, data);
   }
 
 }
