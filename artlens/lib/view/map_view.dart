@@ -26,7 +26,8 @@ class MapView extends StatefulWidget {
 
 class _MapViewState extends State<MapView> {
   final Location _locationController = Location();
-  final Completer<GoogleMapController> _mapController = Completer<GoogleMapController>();
+  final Completer<GoogleMapController> _mapController = Completer<
+      GoogleMapController>();
   final FirestoreService _firestoreService = FirestoreService();
 
   LatLng? _currentP;
@@ -43,7 +44,7 @@ class _MapViewState extends State<MapView> {
 
   Future<void> _initializeConnectivity() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    isOnline = connectivityResult != ConnectivityResult.none;
+    isOnline = connectivityResult[0] != ConnectivityResult.none;
 
     if (isOnline) {
       await _ensureLocationPermission();
@@ -57,7 +58,7 @@ class _MapViewState extends State<MapView> {
       final username = prefs.getString('userName') ?? 'Unknown User';
       final currentDateTime = DateTime.now();
 
-      await _firestoreService.addDocument('BQ362', {
+      widget.appFacade.addDocument('BQ362', {
         'fecha2': currentDateTime,
         'userID': username,
       });
@@ -108,7 +109,8 @@ class _MapViewState extends State<MapView> {
         _museumMarkers = museums.map((museum) {
           return Marker(
             markerId: MarkerId(museum.id.toString()),
-            position: LatLng(double.parse(museum.latitude), double.parse(museum.longitude)),
+            position: LatLng(
+                double.parse(museum.latitude), double.parse(museum.longitude)),
             infoWindow: InfoWindow(title: museum.name),
           );
         }).toSet();
@@ -121,7 +123,8 @@ class _MapViewState extends State<MapView> {
   Future<void> _updateCameraPosition(LatLng position) async {
     final controller = await _mapController.future;
     final cameraPosition = CameraPosition(target: position, zoom: 14);
-    await controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+    await controller.animateCamera(
+        CameraUpdate.newCameraPosition(cameraPosition));
   }
 
   void _onItemTapped(int index) {
@@ -146,15 +149,13 @@ class _MapViewState extends State<MapView> {
       body: BlocListener<ConnectivityCubit, ConnectivityState>(
         listener: (context, connectivityState) {
           if (connectivityState is ConnectivityOffline) {
-            isOnline = false;
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Connection lost. Some features may not be available.'),
-                backgroundColor: Colors.red,
-              ),
-            );
+            setState(() {
+              isOnline = false;
+            });
           } else if (connectivityState is ConnectivityOnline) {
-            isOnline = true;
+            setState(() {
+              isOnline = true;
+            });
             if (_currentP != null) {
               _updateCameraPosition(_currentP!);
               _fetchMuseums(_currentP!.latitude, _currentP!.longitude);
@@ -167,7 +168,8 @@ class _MapViewState extends State<MapView> {
             );
           }
         },
-        child: _currentP == null
+        child: isOnline
+            ? (_currentP == null
             ? const Center(child: CircularProgressIndicator())
             : GoogleMap(
           onMapCreated: (controller) => _mapController.complete(controller),
@@ -183,6 +185,32 @@ class _MapViewState extends State<MapView> {
               strokeWidth: 2,
             ),
           },
+        ))
+            : Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.wifi_off, size: 100, color: Colors.red),
+              const SizedBox(height: 16),
+              Text(
+                'No internet connection',
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(color: Colors.red),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Please check your connection and try again.',
+                textAlign: TextAlign.center,
+                style: Theme
+                    .of(context)
+                    .textTheme
+                    .bodyMedium,
+              ),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: CustomBottomNavBar(

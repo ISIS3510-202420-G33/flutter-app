@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import '../routes.dart';
 import '../widgets/custom_button.dart';
 import 'package:artlens/widgets/custom_bottom_nav_bar.dart';
@@ -20,8 +21,27 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   int _selectedIndex = 0;
+  bool _hasConnection = true;
 
-  // Define a function to handle navigation
+  @override
+  void initState() {
+    super.initState();
+    _checkConnectivity();
+  }
+
+  Future<void> _checkConnectivity() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    setState(() {
+      _hasConnection = connectivityResult[0] != ConnectivityResult.none;
+    });
+
+    Connectivity().onConnectivityChanged.listen((connectivityResult) {
+      setState(() {
+        _hasConnection = connectivityResult[0] != ConnectivityResult.none;
+      });
+    });
+  }
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -43,15 +63,41 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // Access the theme
+    final theme = Theme.of(context);
 
+    if (!_hasConnection) {
+      // Mostrar pantalla de error cuando no hay conexión
+      return Scaffold(
+        appBar: CustomAppBar(title: "No Connection", showProfileIcon: false, showBackArrow: false),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.wifi_off, size: 100, color: theme.colorScheme.error),
+              const SizedBox(height: 16),
+              Text(
+                "No Internet Connection",
+                style: theme.textTheme.headlineMedium?.copyWith(color: theme.colorScheme.error),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Please check your connection and try again.",
+                style: theme.textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Pantalla principal cuando hay conexión
     return Scaffold(
       appBar: CustomAppBar(title: "HOME", showProfileIcon: true, showBackArrow: false),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Content inside a LayoutBuilder to check if scrolling is needed
           return RawScrollbar(
-            thumbVisibility: true, // Scrollbar will appear when needed
+            thumbVisibility: true,
             thickness: 6.0,
             radius: const Radius.circular(15),
             thumbColor: theme.colorScheme.secondary,
@@ -59,12 +105,12 @@ class _HomeViewState extends State<HomeView> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               physics: constraints.maxHeight < 600
                   ? const AlwaysScrollableScrollPhysics()
-                  : const NeverScrollableScrollPhysics(), // Allow scroll only if necessary
+                  : const NeverScrollableScrollPhysics(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: Center(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // Centers content vertically
+                    mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Padding(
@@ -72,20 +118,19 @@ class _HomeViewState extends State<HomeView> {
                         child: Text(
                           "Welcome to ArtLens!",
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.displayLarge, // Using displayLarge from the theme
+                          style: theme.textTheme.displayLarge,
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: FakeSearchBar(
-                        ),
+                        child: FakeSearchBar(),
                       ),
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
                           "Museums in your city",
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyLarge, // Using bodyLarge from the theme
+                          style: theme.textTheme.bodyLarge,
                         ),
                       ),
                       const SizedBox(height: 16),
