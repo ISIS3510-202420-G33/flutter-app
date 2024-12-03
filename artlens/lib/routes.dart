@@ -47,7 +47,7 @@ class Routes {
         return _errorRoute(settings.name);
 
       case camera:
-        return MaterialPageRoute(builder: (_) => CameraPreviewScreen());
+        return MaterialPageRoute(builder: (_) => CameraPreviewScreen(appFacade: appFacade));
 
         case museum:
         if (settings.arguments is Map<String, dynamic>) {

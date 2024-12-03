@@ -6,7 +6,6 @@ import '../entities/museum.dart';
 import '../model/artwork_service.dart';
 import '../model/artist_service.dart';
 import '../model/museum_service.dart';
-import '../model/firestore_service.dart';
 
 abstract class ArtworkState {}
 
@@ -38,7 +37,6 @@ class ArtworkCubit extends Cubit<ArtworkState> {
   final ArtworkService artworkService;
   final ArtistService artistService;
   final MuseumService museumService;
-  final FirestoreService firestoreService;
 
   // Cache for artworks by artist
   Map<int, List<Artwork>> cachedArtworksByArtist = {};
@@ -47,7 +45,6 @@ class ArtworkCubit extends Cubit<ArtworkState> {
       this.artworkService,
       this.artistService,
       this.museumService,
-      this.firestoreService,
       ) : super(ArtworkInitial());
 
   Future<void> fetchArtworkById(int id) async {

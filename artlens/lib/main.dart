@@ -52,7 +52,7 @@ void main() async {
   // Initialize SharedPreferences before building the app
   await SharedPreferences.getInstance();
 
-  final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService(), FirestoreService());
+  final artworkCubit = ArtworkCubit(ArtworkService(), ArtistService(), MuseumService());
   final artistCubit = ArtistCubit(ArtistService());
   final museumCubit = MuseumCubit(MuseumService());
   final commentsCubit = CommentsCubit(CommentsService());
@@ -66,6 +66,7 @@ void main() async {
   final museumArtworkCubit = MuseumArtworkCubit(ArtworkService());
   final connectivityCubit = ConnectivityCubit();
   final isFavoriteCubit = IsFavoriteCubit(userService);
+  final firestoreService = FirestoreService();
 
 
   final appFacade = AppFacade(
@@ -82,7 +83,8 @@ void main() async {
     searchCubit,
     museumArtworkCubit,
     connectivityCubit,
-    isFavoriteCubit
+    isFavoriteCubit,
+    firestoreService
   );
 
   // Load saved session, if any
